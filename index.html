@@ -15,7 +15,14 @@
   <header><h1>ARES</h1></header>
   <main id="chat">Sistema iniciado. Esperando órdenes...</main>
    <input type="file" onchange="AresDiag.leer(this.files[0])"> 
-  <footer>v0.1 · Fase 1</footer>
-   <script src="diagnostico.js"></script> 
+  <footer>v0.1 · Fase 1 · Núcleo Local</footer>
+  
+  <div style="display:flex; padding:10px; gap:5px; border-top:1px solid #0ff;">
+    <input type="text" id="entrada" placeholder="Habla con Ares..." style="flex:1; background:#111; color:#0ff; border:1px solid #0ff; padding:8px; outline:none;">
+    <button id="enviar" style="background:#0ff; color:#000; border:none; padding:8px 15px; font-weight:bold;">OK</button>
+  </div>
+
+  <script src="diagnostico.js"></script>
+  <script src="cerebro.js"></script>
 </body>
 </html>

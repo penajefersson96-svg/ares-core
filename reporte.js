@@ -42,7 +42,7 @@ const AresReporte = {
         try { const r = await fetch(a + '?t=' + Date.now()); new Function(await r.text()); AresDiag.log('⚠️ ' + a + ' carga pero no define su modulo'); }
         catch (e) { AresDiag.log('🚨 ' + a + ' sintaxis: ' + e.message); }
       }
-      if (!faltan.length) AresDiag.log('✅ Todos los modulos vivos y sin errores de sintaxis.');
+      
     }, 1500);
     
   }

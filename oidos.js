@@ -48,7 +48,6 @@ const AresOidos = {
     r.onresult = (e) => {
       if (hecho || window.speechSynthesis.speaking) return;
       const t = e.results[e.results.length - 1][0].transcript.toLowerCase();
-      AresDiag.log('👂 Oí: ' + t);
       const limpio = AresOidos.limpiar(t);
       const nl = limpio.replace(/[^a-z0-9\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00fc ]/gi, '');
       if (AresVoz.ultimo && (AresVoz.ultimo.includes(nl) || nl.includes(AresVoz.ultimo.slice(0, 30)))) return;

@@ -124,7 +124,7 @@ const AresVoz = {
       if (!AresVoz.activada) window.speechSynthesis.cancel();
     };
     document.body.appendChild(b);
-    AresDiag.log(AresVoz.soportada ? '🎙️ Voz v7 lista.' : '⚠️ Voz no disponible en este visor.');
+    
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);

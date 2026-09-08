@@ -26,7 +26,6 @@ const AresDiag = {
     window.addEventListener('offline', () => AresDiag.log('🔴 ¡Se cayó internet!'));
     window.addEventListener('online', () => AresDiag.log('🟢 Internet restaurado'));
     
-    AresDiag.log('🛠️ Módulo Diagnóstico iniciado.');
   }
 };
 document.addEventListener('DOMContentLoaded', AresDiag.init);

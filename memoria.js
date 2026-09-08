@@ -40,7 +40,7 @@ const AresMemoria = {
         else if (t === 'olvida todo') AresMemoria.olvidar();
       }
     };
-    AresDiag.log('🧠 Módulo de memoria activado.');
+    
   }
 };
 document.addEventListener('DOMContentLoaded', AresMemoria.init);

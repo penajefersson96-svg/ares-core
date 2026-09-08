@@ -1,4 +1,4 @@
-// sonidos.js — Risas, llantos, fiesta + registro del mayordomo
+// sonidos.js — Risas, llantos, fiesta + mayordomo de cache
 const AresSonidos = {
   ctx: () => {
     AresSonidos.c = AresSonidos.c || new (window.AudioContext || window.webkitAudioContext)();
@@ -27,11 +27,10 @@ const AresSonidos = {
     const origHablar = AresVoz.hablar;
     AresVoz.hablar = (t) => {
       const emo = AresVoz.emocionDe(t);
-      if (emo === 'alegria') setTimeout(AresSonidos.risa, 120);
-      if (emo === 'tristeza') setTimeout(AresSonidos.llanto, 250);
-      origHablar(t);
+      if (emo === 'alegria') { setTimeout(AresSonidos.risa, 120); origHablar(t.replace(/^(jaja[ja]*[,! ]?\s*)+/i, '') || t); }
+      else if (emo === 'tristeza') { setTimeout(AresSonidos.llanto, 250); origHablar(t); }
+      else origHablar(t);
     };
-    AresDiag.log('🎭 Sonidos de vida: risa, llanto y fiesta.');
   }
 };
 document.addEventListener('DOMContentLoaded', AresSonidos.init);

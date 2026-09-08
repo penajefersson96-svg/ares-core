@@ -33,7 +33,7 @@ const AresOrbe = {
     dibujar();
     const h = AresVoz.hablar;
     AresVoz.hablar = (txt) => { AresOrbe.energia = 1; h(txt); };
-    AresDiag.log('💠 Corazón visual encendido.');
+    
   }
 };
 document.addEventListener('DOMContentLoaded', AresOrbe.init);

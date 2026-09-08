@@ -44,7 +44,7 @@ const AresReporte = {
       }
       if (!faltan.length) AresDiag.log('✅ Todos los modulos vivos y sin errores de sintaxis.');
     }, 1500);
-    AresDiag.log('📋 Escribe "reporte" para ver mi parte medico.');
+    
   }
 };
 document.addEventListener('DOMContentLoaded', AresReporte.init);

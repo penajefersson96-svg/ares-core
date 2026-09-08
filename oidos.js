@@ -10,7 +10,7 @@ const AresOidos = {
     b1.onclick = () => AresOidos.unaVez(b1); ok.parentNode.insertBefore(b1, ok);
     const b2 = document.createElement('button'); b2.textContent = '🛡️'; b2.style.cssText = st;
     b2.onclick = () => AresOidos.centinelaToggle(b2); ok.parentNode.insertBefore(b2, ok);
-    AresDiag.log('👂 Oidos v7 listos.');
+    
   },
   nuevo: () => { const R = window.SpeechRecognition || window.webkitSpeechRecognition; const r = new R(); r.lang = 'es-ES'; r.interimResults = false; return r; },
   limpiar: (t) => {

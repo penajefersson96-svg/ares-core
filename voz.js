@@ -19,6 +19,8 @@ const AresVoz = {
     }
     texto = texto.replace(/jefersson/gi, 'Yefersson');
     texto = texto.replace(/[*_#`]/g, '');
+    texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '');
+    AresVoz.ultimo = texto;
     s.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es'));

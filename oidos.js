@@ -39,6 +39,13 @@ const AresOidos = {
     return s.replace(/\s+/g, ' ').trim();
   },
 
+  esperarVoz: (fn) => {
+    const chequeo = () => {
+      if (window.speechSynthesis.speaking) { setTimeout(chequeo, 500); }
+      else { setTimeout(fn, 1000); }
+    };
+    chequeo();
+  },
   renovar: () => {
     clearTimeout(AresOidos.dormido);
     AresOidos.dormido = setTimeout(() => AresOidos.centinelaToggle(AresOidos.b2), 300000);
@@ -89,6 +96,7 @@ const AresOidos = {
       const t = ult[0].transcript.toLowerCase();
       AresDiag.log('👂 Oí: ' + t);
       const limpio = AresOidos.limpiar(t);
+      if (AresVoz.ultimo && (AresVoz.ultimo.includes(limpio) || limpio.includes(AresVoz.ultimo.slice(0, 40)))) return; 
       if (limpio.length < 2) {
         if (/a\s*res/.test(t)) AresVoz.hablar('¿Sí, socio?');
         return;
@@ -97,7 +105,7 @@ const AresOidos = {
       AresOidos.renovar();
       document.getElementById('entrada').value = limpio;
       AresCerebro.enviar();
-      setTimeout(() => { r.stop(); AresOidos.vigilar(b); }, 6000);
+      AresOidos.esperarVoz(() => { r.stop(); AresOidos.vigilar(b); }); 
     };
     r.onend = () => {
       if (!hecho && AresOidos.centinela) setTimeout(() => AresOidos.vigilar(b), 400);

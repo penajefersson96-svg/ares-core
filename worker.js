@@ -27,16 +27,23 @@ export default {
       const key = env.GEMINI_API_KEY;
       if (!key) return Reply('⚠️ Mi mente aun no tiene llave.');
 
-      const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=' + key, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Peña, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico ni repitas formulas de cortesia vacias. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos.' }] },
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      });
-      const d = await r.json();
-      const t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + r.status));
+      const modelos = ['gemini-2.5-flash', 'gemini-2.5-flash-lite'];
+      let d = null;
+      let status = 0;
+      for (const m of modelos) {
+        const r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/' + m + ':generateContent?key=' + key, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Peña, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+        status = r.status;
+        d = await r.json();
+        if (d.candidates && d.candidates[0]) break;
+      }
+      const t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));
       return Reply(t);
     } catch (e) {
       return Reply('⚠️ Fallo de conexion neuronal.');

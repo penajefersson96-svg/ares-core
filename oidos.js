@@ -1,4 +1,4 @@
-// oidos.js v4 — Centinela sereno (microfono estable)
+// oidos.js v5 — Conversacion fluida + comprension con carino
 const AresOidos = {
   activo: false,
   centinela: false,
@@ -20,16 +20,23 @@ const AresOidos = {
     b2.textContent = '🛡️'; b2.style.cssText = estilo;
     b2.onclick = () => AresOidos.centinelaToggle(b2);
     ok.parentNode.insertBefore(b2, ok);
-    AresDiag.log('👂 Oidos listos: 🎙 una vez, 🛡️ centinela.');
+    AresDiag.log('👂 Oidos v5: 🟢 = conversacion libre.');
   },
 
-  nuevo: (continuo) => {
+  nuevo: () => {
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
     const r = new R();
     r.lang = 'es-ES';
     r.interimResults = false;
-    if (continuo) r.continuous = true;
     return r;
+  },
+
+  limpiar: (t) => {
+    let s = t.toLowerCase().trim();
+    if (/a\s*res/.test(s)) s = s.replace(/.*a\s*res/, '');
+    let prev;
+    do { prev = s; s = s.replace(/\b(\w+)\s+\1\b/g, '$1'); } while (s !== prev);
+    return s.replace(/\s+/g, ' ').trim();
   },
 
   renovar: () => {
@@ -41,9 +48,10 @@ const AresOidos = {
     if (AresOidos.activo) return;
     AresOidos.activo = true;
     b.textContent = '🔴';
-    const r = AresOidos.nuevo(false);
+    const r = AresOidos.nuevo();
     r.onresult = (e) => {
-      document.getElementById('entrada').value = e.results[0][0].transcript;
+      const limpio = AresOidos.limpiar(e.results[0][0].transcript);
+      document.getElementById('entrada').value = limpio;
       AresCerebro.enviar();
     };
     r.onend = () => { AresOidos.activo = false; b.textContent = '🎙'; };
@@ -66,13 +74,13 @@ const AresOidos = {
     b.textContent = '🟢';
     if (navigator.wakeLock) navigator.wakeLock.request('screen').then(w => { AresOidos.wake = w; }).catch(() => {});
     AresOidos.renovar();
-    AresDiag.log('💂 Centinela activo: se dormira tras 5 min de silencio.');
+    AresDiag.log('💂 Centinela v5: habla libre, te escucho y respondo.');
     AresOidos.vigilar(b);
   },
 
   vigilar: (b) => {
     if (!AresOidos.centinela) return;
-    const r = AresOidos.nuevo(false);
+    const r = AresOidos.nuevo();
     AresOidos.r = r;
     let hecho = false;
     r.onresult = (e) => {
@@ -80,42 +88,22 @@ const AresOidos = {
       const ult = e.results[e.results.length - 1];
       const t = ult[0].transcript.toLowerCase();
       AresDiag.log('👂 Oí: ' + t);
-      if (!/a\s*res/.test(t)) return;
-      hecho = true;
-      const resto = t.replace(/.*a\s*res/, '').trim();
-      if (resto.length > 2) {
-        AresOidos.renovar();
-        document.getElementById('entrada').value = resto;
-        AresCerebro.enviar();
-        setTimeout(() => { r.stop(); AresOidos.vigilar(b); }, 6000);
-      } else {
-        AresOidos.renovar();
-        r.stop();
-        AresVoz.hablar('¿Sí, Jefersson?');
-        AresOidos.unaVezCentinela(b);
+      const limpio = AresOidos.limpiar(t);
+      if (limpio.length < 2) {
+        if (/a\s*res/.test(t)) AresVoz.hablar('¿Sí, socio?');
+        return;
       }
+      hecho = true;
+      AresOidos.renovar();
+      document.getElementById('entrada').value = limpio;
+      AresCerebro.enviar();
+      setTimeout(() => { r.stop(); AresOidos.vigilar(b); }, 6000);
     };
     r.onend = () => {
       if (!hecho && AresOidos.centinela) setTimeout(() => AresOidos.vigilar(b), 400);
     };
     r.onerror = (e) => {
       if (e.error === 'not-allowed') { AresDiag.log('⚠️ Microfono denegado: centinela dormido.'); AresOidos.centinelaToggle(b); }
-    };
-    r.start();
-  },
-
-  unaVezCentinela: (b) => {
-    const r = AresOidos.nuevo(false);
-    let hecho = false;
-    r.onresult = (e) => {
-      hecho = true;
-      AresOidos.renovar();
-      document.getElementById('entrada').value = e.results[0][0].transcript;
-      AresCerebro.enviar();
-      setTimeout(() => AresOidos.vigilar(b), 6000);
-    };
-    r.onend = () => {
-      if (!hecho && AresOidos.centinela) AresOidos.vigilar(b);
     };
     r.start();
   }

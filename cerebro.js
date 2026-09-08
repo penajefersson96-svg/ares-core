@@ -26,6 +26,7 @@ const AresCerebro = {
 
     AresCerebro.mostrar('TÚ', texto);
     input.value = "";
+    input.blur();
 
     // Intentar conectar con la IA real (Backend)
     try {

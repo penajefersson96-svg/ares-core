@@ -40,6 +40,8 @@ const AresVoz = {
   },
 
   init: () => {
+    if (AresVoz.soportada) { const s = window.speechSynthesis; s.getVoices(); s.onvoiceschanged = () => s.getVoices(); }
+    if (AresVoz.soportada) { const w = new SpeechSynthesisUtterance(' '); w.volume = 0; w.rate = 2; window.speechSynthesis.speak(w); }
     const original = AresCerebro.mostrar;
     AresCerebro.mostrar = (quien, msg) => {
       original(quien, msg);

@@ -1,4 +1,4 @@
-// worker.js — Mente de Ares (con radiografia /diag)
+// worker.js — Mente de Ares (tarjeta de personalidad nueva)
 export default {
   async fetch(request, env) {
     const ruta = new URL(request.url).pathname;
@@ -31,7 +31,7 @@ export default {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal leal a Jefersson Peña, tu creador. Responde en español, corto, directo y cuidando los datos moviles.' }] },
+          systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal leal a Jefersson Peña, tu creador. Responde en español y cuida los datos moviles: se breve por defecto, pero extiendete cuando el tema lo pida.' }] },
           contents: [{ parts: [{ text: prompt }] }]
         })
       });

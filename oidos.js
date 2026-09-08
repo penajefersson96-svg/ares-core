@@ -26,7 +26,11 @@ const AresOidos = {
       AresCerebro.enviar();
     };
     r.onend = () => { AresOidos.activo = false; b.textContent = '🎙'; };
-    r.onerror = () => { AresOidos.activo = false; b.textContent = '🎙'; };
+    r.onerror = (e) => {
+      AresOidos.activo = false;
+      b.textContent = '🎙';
+      AresDiag.log('⚠️ Oidos: ' + e.error + ' (si dice not-allowed, activa el permiso de microfono en Chrome)');
+    };
     r.start();
   }
 };

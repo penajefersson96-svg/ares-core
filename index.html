@@ -4,25 +4,27 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ARES</title>
-<style>
-  body{margin:0;font-family:sans-serif;background:#000;color:#0ff;display:flex;flex-direction:column;height:100vh}
-  header{padding:10px;text-align:center;border-bottom:1px solid #0ff}
-  main{flex:1;padding:10px;overflow:auto}
-  footer{padding:10px;text-align:center;border-top:1px solid #0ff;font-size:12px}
-</style>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
   <header><h1>ARES</h1></header>
+
   <main id="chat">Sistema iniciado. Esperando órdenes...</main>
-   <input type="file" onchange="AresDiag.leer(this.files[0])"> 
-  <footer>v0.1 · Fase 1 · Núcleo Local</footer>
-  
-  <div style="display:flex; padding:10px; gap:5px; border-top:1px solid #0ff;">
-    <input type="text" id="entrada" placeholder="Habla con Ares..." style="flex:1; background:#111; color:#0ff; border:1px solid #0ff; padding:8px; outline:none;">
-    <button id="enviar" style="background:#0ff; color:#000; border:none; padding:8px 15px; font-weight:bold;">OK</button>
+
+  <details class="scan">
+    <summary>📂 Escáner de archivos</summary>
+    <input type="file" onchange="AresDiag.leer(this.files[0])">
+  </details>
+
+  <div class="chat-input">
+    <input type="text" id="entrada" placeholder="Habla con Ares..." autocomplete="off">
+    <button id="enviar">OK</button>
   </div>
+
+  <footer>v0.3 · Fase 3 · Núcleo Local</footer>
 
   <script src="diagnostico.js"></script>
   <script src="cerebro.js"></script>
+  <script src="voz.js"></script>
 </body>
 </html>

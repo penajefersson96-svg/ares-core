@@ -1,0 +1,95 @@
+:root {
+  --neon: #0ff;
+  --bg: #050510;
+  --panel: rgba(0, 255, 255, 0.05);
+}
+
+body {
+  margin: 0;
+  font-family: 'Consolas', 'Courier New', monospace; /* Fuente de terminal */
+  background: var(--bg);
+  color: var(--neon);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+header {
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid var(--neon);
+  background: var(--panel);
+  backdrop-filter: blur(5px);
+  text-transform: uppercase;
+  letter-spacing: 5px;
+  animation: pulso 3s infinite; /* Ares "respira" */
+}
+
+main {
+  flex: 1;
+  padding: 15px;
+  overflow-y: auto;
+  /* Efecto de líneas de escáner sutiles */
+  background: linear-gradient(0deg, transparent 97%, rgba(0,255,255,0.05) 100%);
+  background-size: 100% 4px;
+}
+
+footer {
+  padding: 8px;
+  text-align: center;
+  border-top: 1px solid var(--neon);
+  font-size: 10px;
+  opacity: 0.6;
+  letter-spacing: 2px;
+}
+
+/* Zona de escritura futurista */
+.chat-input {
+  display: flex;
+  padding: 10px;
+  gap: 8px;
+  border-top: 1px solid var(--neon);
+  background: rgba(0,0,0,0.8);
+}
+
+input {
+  flex: 1;
+  background: transparent;
+  border: 1px solid rgba(0,255,255,0.3);
+  color: var(--neon);
+  padding: 10px;
+  outline: none;
+  font-family: inherit;
+}
+
+input:focus {
+  border-color: var(--neon);
+  box-shadow: 0 0 10px rgba(0,255,255,0.2);
+}
+
+button {
+  background: transparent;
+  border: 1px solid var(--neon);
+  color: var(--neon);
+  padding: 10px 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+button:active {
+  background: var(--neon);
+  color: #000;
+  box-shadow: 0 0 20px var(--neon);
+}
+
+/* Animación de energía */
+@keyframes pulso {
+  0%, 100% { text-shadow: 0 0 5px var(--neon); opacity: 0.8; }
+  50% { text-shadow: 0 0 20px var(--neon); opacity: 1; }
+}
+
+/* Scrollbar invisible y fina */
+::-webkit-scrollbar { width: 3px; }
+::-webkit-scrollbar-thumb { background: var(--neon); }

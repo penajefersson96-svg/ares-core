@@ -7,31 +7,52 @@ const AresCerebro = {
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
   },
-  pensar: (texto) => {
+  
+  pensarLocal: (texto) => {
     texto = texto.toLowerCase();
-    let respuesta = "Entendido. Mi núcleo neuronal se activará en la siguiente fase.";
+    let respuesta = "Modo entrenamiento: Mi mente real se activará al desplegar el proyecto en la nube.";
 
     if (texto.includes("hola")) respuesta = "Hola socio. Sistemas operativos al 100%.";
-    else if (texto.includes("estado")) respuesta = "Memoria estable. Diagnóstico activo. Listo para aprender.";
-    else if (texto.includes("diagnostico")) {
-      const logs = JSON.parse(localStorage.getItem('ares_logs') || '[]');
-      respuesta = logs.length ? `Último reporte: ${logs[logs.length-1]}` : "Todo en orden, sin errores.";
-    }
-
+    else if (texto.includes("estado")) respuesta = "Memoria estable. Diagnóstico activo. Esperando núcleo neuronal.";
+    else if (texto.includes("futuro")) respuesta = "Visualizo una interfaz holográfica y aprendizaje autónomo, socio.";
+    
     AresCerebro.mostrar('ARES', respuesta);
   },
+
+  enviar: async () => {
+    const input = document.getElementById('entrada');
+    const texto = input.value.trim();
+    if (!texto) return;
+
+    AresCerebro.mostrar('TÚ', texto);
+    input.value = "";
+
+    // Intentar conectar con la IA real (Backend)
+    try {
+      const res = await fetch('/api/ia', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: texto })
+      });
+      
+      if (!res.ok) throw new Error('Sin servidor');
+      
+      const data = await res.json();
+      AresCerebro.mostrar('ARES', data.respuesta);
+    } catch (error) {
+      // Si no hay servidor (Spck local), usar modo entrenamiento
+      AresCerebro.pensarLocal(texto);
+    }
+  },
+
   init: () => {
     const input = document.getElementById('entrada');
     const btn = document.getElementById('enviar');
 
     if (btn && input) {
-      btn.onclick = () => {
-        const texto = input.value.trim();
-        if (texto) {
-          AresCerebro.mostrar('TÚ', texto);
-          AresCerebro.pensar(texto);
-          input.value = "";
-        }
+      btn.onclick = AresCerebro.enviar;
+      input.onkeydown = (e) => {
+        if (e.key === 'Enter') AresCerebro.enviar();
       };
     }
   }

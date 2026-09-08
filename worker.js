@@ -1,7 +1,13 @@
-// worker.js — Mente de Ares (Con permiso CORS arreglado)
+// worker.js — Mente de Ares (con radiografia /diag)
 export default {
   async fetch(request, env) {
-    // 1. Responder al "explorador" (CORS Preflight)
+    const ruta = new URL(request.url).pathname;
+
+    if (ruta === '/diag') {
+      const nombres = Object.keys(env).filter(k => k !== 'ASSETS');
+      return Reply('Variables en mi bolsillo: ' + (nombres.join(', ') || 'NINGUNA'));
+    }
+
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
@@ -40,9 +46,6 @@ export default {
 
 function Reply(t) {
   return new Response(JSON.stringify({ respuesta: t }), {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*'
-    }
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }

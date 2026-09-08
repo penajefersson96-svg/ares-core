@@ -1,4 +1,4 @@
-// voz.js — La boca de Ares (Fase 4, con selector y memoria de voz)
+// voz.js — La boca de Ares (definitiva: sin asteriscos, sin mujer fantasma)
 const AresVoz = {
   activada: true,
   saltar: false,
@@ -13,14 +13,18 @@ const AresVoz = {
   hablar: (texto) => {
     if (!AresVoz.activada || !AresVoz.soportada) return;
     const s = window.speechSynthesis;
+    if (s.getVoices().length === 0) {
+      s.addEventListener('voiceschanged', () => AresVoz.hablar(texto), { once: true });
+      return;
+    }
+    texto = texto.replace(/jefersson/gi, 'Yefersson');
+    texto = texto.replace(/[*_#`]/g, '');
     s.cancel();
-    texto = texto.replace(/jefersson/gi, 'Jefersón'); 
-     texto = texto.replace(/jefersson/gi, 'Yefersson'); 
-     const u = new SpeechSynthesisUtterance(texto);
-    const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es')); 
+    const u = new SpeechSynthesisUtterance(texto);
+    const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es'));
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
     u.rate = 1;
-    u.pitch = 0.8;
+    u.pitch = 0.9;
     s.speak(u);
   },
 
@@ -42,6 +46,7 @@ const AresVoz = {
   init: () => {
     if (AresVoz.soportada) { const s = window.speechSynthesis; s.getVoices(); s.onvoiceschanged = () => s.getVoices(); }
     if (AresVoz.soportada) { const w = new SpeechSynthesisUtterance(' '); w.volume = 0; w.rate = 2; window.speechSynthesis.speak(w); }
+
     const original = AresCerebro.mostrar;
     AresCerebro.mostrar = (quien, msg) => {
       original(quien, msg);
@@ -58,7 +63,7 @@ const AresVoz = {
 
     const b = document.createElement('button');
     b.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99;width:42px;height:42px;border-radius:50%;background:#000;border:1px solid #0ff;color:#0ff;font-size:18px';
-    b.textContent = AresVoz.soportada ? '🔊' : '️';
+    b.textContent = AresVoz.soportada ? '🔊' : '⚠️';
     b.onclick = () => {
       if (!AresVoz.soportada) { AresDiag.log('⚠️ Este visor no tiene motor de voz. Abre Ares en Chrome.'); return; }
       AresVoz.activada = !AresVoz.activada;

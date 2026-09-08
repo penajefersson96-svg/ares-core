@@ -1,4 +1,4 @@
-// voz.js — La boca de Ares (Fase 4, a prueba de choques)
+// voz.js — La boca de Ares (Fase 4, voz estable)
 const AresVoz = {
   activada: true,
   soportada: ('speechSynthesis' in window),
@@ -11,9 +11,7 @@ const AresVoz = {
     u.lang = 'es-ES';
     u.rate = 1;
     u.pitch = 0.9;
-    const v = s.getVoices().find(v => v.lang.startsWith('es'));
-    if (v) u.voice = v;
-    s.speak(u);
+    s.speak(u); // Usa SIEMPRE la voz que elegiste en Android
   },
 
   init: () => {

@@ -1,9 +1,21 @@
-// worker.js — Mente de Ares en Cloudflare Workers
+// worker.js — Mente de Ares (Con permiso CORS arreglado)
 export default {
   async fetch(request, env) {
-    if (request.method !== 'POST') {
-      return new Response('ARES en linea', { headers: { 'Content-Type': 'text/plain' } });
+    // 1. Responder al "explorador" (CORS Preflight)
+    if (request.method === 'OPTIONS') {
+      return new Response(null, {
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Methods': 'POST, OPTIONS',
+          'Access-Control-Allow-Headers': 'Content-Type'
+        }
+      });
     }
+
+    if (request.method !== 'POST') {
+      return new Response('ARES en linea', { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
+    }
+
     try {
       const { prompt } = await request.json();
       const key = env.GEMINI_API_KEY;
@@ -28,6 +40,9 @@ export default {
 
 function Reply(t) {
   return new Response(JSON.stringify({ respuesta: t }), {
-    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
+    headers: {
+      'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*'
+    }
   });
 }

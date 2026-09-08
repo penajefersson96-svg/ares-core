@@ -18,7 +18,7 @@ const AresVoz = {
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.lang.startsWith('es'));
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
     u.rate = 1;
-    u.pitch = 0.9;
+    u.pitch = 0.8;
     s.speak(u);
   },
 

@@ -29,7 +29,7 @@ const AresCerebro = {
 
     // Intentar conectar con la IA real (Backend)
     try {
-      const res = await fetch('/api/ia', {
+      const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: texto })

@@ -31,12 +31,12 @@ export default {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal leal a Jefersson Peña, tu creador. Responde en español y cuida los datos moviles: se breve por defecto, pero extiendete cuando el tema lo pida.' }] },
+          systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Peña, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico ni repitas formulas de cortesia vacias. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos.' }] },
           contents: [{ parts: [{ text: prompt }] }]
         })
       });
       const d = await r.json();
-      const t = d.candidates?.[0]?.content?.parts?.[0]?.text || 'No pude procesar eso.';
+      const t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + r.status));
       return Reply(t);
     } catch (e) {
       return Reply('⚠️ Fallo de conexion neuronal.');

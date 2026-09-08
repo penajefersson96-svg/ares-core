@@ -72,16 +72,17 @@ const AresOidos = {
 
   vigilar: (b) => {
     if (!AresOidos.centinela) return;
-    const r = AresOidos.nuevo(true);
+    const r = AresOidos.nuevo(false);
     AresOidos.r = r;
     let hecho = false;
     r.onresult = (e) => {
       if (window.speechSynthesis.speaking) return;
       const ult = e.results[e.results.length - 1];
       const t = ult[0].transcript.toLowerCase();
-      if (!t.includes('ares')) return;
+      AresDiag.log('👂 Oí: ' + t);
+      if (!/a\s*res/.test(t)) return;
       hecho = true;
-      const resto = t.replace(/.*ares/, '').trim();
+      const resto = t.replace(/.*a\s*res/, '').trim();
       if (resto.length > 2) {
         AresOidos.renovar();
         document.getElementById('entrada').value = resto;

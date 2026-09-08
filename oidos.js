@@ -1,4 +1,4 @@
-// oidos.js v3 — Centinela que no muere mientras haya conversacion
+// oidos.js v4 — Centinela sereno (microfono estable)
 const AresOidos = {
   activo: false,
   centinela: false,
@@ -23,11 +23,12 @@ const AresOidos = {
     AresDiag.log('👂 Oidos listos: 🎙 una vez, 🛡️ centinela.');
   },
 
-  nuevo: () => {
+  nuevo: (continuo) => {
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
     const r = new R();
     r.lang = 'es-ES';
     r.interimResults = false;
+    if (continuo) r.continuous = true;
     return r;
   },
 
@@ -40,7 +41,7 @@ const AresOidos = {
     if (AresOidos.activo) return;
     AresOidos.activo = true;
     b.textContent = '🔴';
-    const r = AresOidos.nuevo();
+    const r = AresOidos.nuevo(false);
     r.onresult = (e) => {
       document.getElementById('entrada').value = e.results[0][0].transcript;
       AresCerebro.enviar();
@@ -71,28 +72,31 @@ const AresOidos = {
 
   vigilar: (b) => {
     if (!AresOidos.centinela) return;
-    const r = AresOidos.nuevo();
+    const r = AresOidos.nuevo(true);
     AresOidos.r = r;
+    let hecho = false;
     r.onresult = (e) => {
-      if (window.speechSynthesis.speaking) { AresOidos.vigilar(b); return; }
-      const t = e.results[0][0].transcript.toLowerCase();
-      if (t.includes('ares')) {
-        const resto = t.replace(/.*ares/, '').trim();
-        if (resto.length > 2) {
-          AresOidos.renovar();
-          document.getElementById('entrada').value = resto;
-          AresCerebro.enviar();
-          setTimeout(() => AresOidos.vigilar(b), 6000);
-        } else {
-          AresOidos.renovar();
-          AresVoz.hablar('¿Sí, Jefersson?');
-          AresOidos.unaVezCentinela(b);
-        }
+      if (window.speechSynthesis.speaking) return;
+      const ult = e.results[e.results.length - 1];
+      const t = ult[0].transcript.toLowerCase();
+      if (!t.includes('ares')) return;
+      hecho = true;
+      const resto = t.replace(/.*ares/, '').trim();
+      if (resto.length > 2) {
+        AresOidos.renovar();
+        document.getElementById('entrada').value = resto;
+        AresCerebro.enviar();
+        setTimeout(() => { r.stop(); AresOidos.vigilar(b); }, 6000);
       } else {
-        AresOidos.vigilar(b);
+        AresOidos.renovar();
+        r.stop();
+        AresVoz.hablar('¿Sí, Jefersson?');
+        AresOidos.unaVezCentinela(b);
       }
     };
-    r.onend = () => { if (AresOidos.centinela) setTimeout(() => AresOidos.vigilar(b), 400); };
+    r.onend = () => {
+      if (!hecho && AresOidos.centinela) setTimeout(() => AresOidos.vigilar(b), 400);
+    };
     r.onerror = (e) => {
       if (e.error === 'not-allowed') { AresDiag.log('⚠️ Microfono denegado: centinela dormido.'); AresOidos.centinelaToggle(b); }
     };
@@ -100,14 +104,18 @@ const AresOidos = {
   },
 
   unaVezCentinela: (b) => {
-    const r = AresOidos.nuevo();
+    const r = AresOidos.nuevo(false);
+    let hecho = false;
     r.onresult = (e) => {
+      hecho = true;
       AresOidos.renovar();
       document.getElementById('entrada').value = e.results[0][0].transcript;
       AresCerebro.enviar();
       setTimeout(() => AresOidos.vigilar(b), 6000);
     };
-    r.onend = () => { if (AresOidos.centinela) setTimeout(() => AresOidos.vigilar(b), 400); };
+    r.onend = () => {
+      if (!hecho && AresOidos.centinela) AresOidos.vigilar(b);
+    };
     r.start();
   }
 };

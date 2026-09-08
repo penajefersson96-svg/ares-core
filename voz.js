@@ -14,7 +14,7 @@ const AresVoz = {
 
   emocionDe: (t) => {
     if (/jaja|chiste|broma|que risa/.test(t)) return 'alegria';
-    if (/triste|llor|lo siento|perdon/.test(t)) return 'tristeza';
+    if (/triste|llor|lo siento|perdon|lamento|pena|duelo|perdio|muerte|extrana|corazon|abrazo/.test(t)) return 'tristeza'; 
     if (/increible|genial|emocion|victoria|logramos/.test(t)) return 'emocion';
     return 'neutro';
   },
@@ -23,6 +23,7 @@ const AresVoz = {
     try {
       AresVoz.audio = AresVoz.audio || new (window.AudioContext || window.webkitAudioContext)();
       const c = AresVoz.audio;
+      if (c.state === 'suspended') c.resume(); 
       const mapa = {
         '1f602': [600, 500, 400],
         '1f923': [650, 520, 420],
@@ -68,6 +69,7 @@ const AresVoz = {
     texto = texto.replace(/jefersson/gi, 'Yefersson');
     texto = texto.replace(/[*_#`]/g, '');
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '');
+    texto = texto.replace(/\u2026|\.{2,}/g, ', '); 
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00fc ]/gi, '');
     s.cancel();
     const u = new SpeechSynthesisUtterance(texto);

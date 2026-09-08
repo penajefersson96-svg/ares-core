@@ -14,7 +14,8 @@ const AresVoz = {
     if (!AresVoz.activada || !AresVoz.soportada) return;
     const s = window.speechSynthesis;
     s.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
+    texto = texto.replace(/jefersson/gi, 'Jefersón'); 
+     const u = new SpeechSynthesisUtterance(texto);
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.lang.startsWith('es'));
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
     u.rate = 1;

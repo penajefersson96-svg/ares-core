@@ -11,6 +11,7 @@ const AresOrbe = {
     const dibujar = () => {
       t += 0.02;
       AresOrbe.energia *= 0.96;
+      if (window.speechSynthesis.speaking) AresOrbe.energia = 0.6 + Math.abs(Math.sin(t * 6)) * 0.4;
       x.clearRect(0, 0, 140, 140);
       const r = 26 + AresOrbe.energia * 10 + Math.sin(t * 2) * 2;
       const g = x.createRadialGradient(70, 70, 4, 70, 70, r + 26);

@@ -6,7 +6,7 @@ const AresOrbe = {
     const c = document.createElement('canvas');
     c.width = 160; c.height = 160;
     c.style.cssText = 'display:block;margin:6px auto;';
-    document.querySelector('header').prepend(c);
+    document.body.prepend(c);
     const x = c.getContext('2d');
     let t = 0;
     const fil = [0.9, 1.3, 1.7, 2.3, 2.9];

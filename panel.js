@@ -4,7 +4,7 @@ const AresPanel = {
     const st = document.createElement('style');
     st.textContent = [
       'body{background:#04060c repeating-linear-gradient(0deg,transparent 0 34px,rgba(0,255,255,.05) 34px 35px),repeating-linear-gradient(90deg,transparent 0 34px,rgba(0,255,255,.04) 34px 35px);}',
-      'header canvas{position:fixed;top:4%;left:50%;transform:translateX(-50%);width:230px;height:230px;z-index:0;pointer-events:none;opacity:.9;}',
+      'header canvas{position:fixed;top:40%;left:50%;transform:translate(-50%,-50%);width:230px;height:230px;z-index:0;pointer-events:none;opacity:.9;}',
       'header{position:relative;z-index:1;background:rgba(4,10,18,.55);backdrop-filter:blur(3px);border:1px solid rgba(0,255,255,.35);border-radius:10px;margin:8px;padding:8px;}',
       'header h1{color:#ffb347;text-shadow:0 0 12px rgba(255,179,71,.6);letter-spacing:6px;font-size:20px;margin:2px 0;}',
       '.p-banner{background:#0ff;color:#00131a;font-weight:bold;padding:3px 10px;display:inline-block;transform:skewX(-12deg);margin-bottom:4px;font-size:13px;}',

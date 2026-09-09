@@ -110,21 +110,13 @@ const AresVoz = {
         if (t === 'voces') { AresVoz.saltar = true; AresVoz.listar(); }
         const m = t.match(/^voz (\d+)$/);
         if (m) { AresVoz.saltar = true; AresVoz.elegir(Number(m[1])); }
+        if (t === 'silencio') { AresVoz.activada = false; window.speechSynthesis.cancel(); }
+          if (t === 'habla') { AresVoz.activada = true; }
       }
       if (quien === 'ARES') {
         if (AresVoz.saltar) { AresVoz.saltar = false; } else { AresVoz.hablar(msg); }
       }
     };
-    const b = document.createElement('button');
-    b.style.cssText = 'position:fixed;top:10px;right:10px;z-index:99;width:42px;height:42px;border-radius:50%;background:#000;border:1px solid #0ff;color:#0ff;font-size:18px';
-    b.textContent = AresVoz.soportada ? '🔊' : '⚠️';
-    b.onclick = () => {
-      if (!AresVoz.soportada) { AresDiag.log('⚠️ Este visor no tiene motor de voz. Abre Ares en Chrome.'); return; }
-      AresVoz.activada = !AresVoz.activada;
-      b.textContent = AresVoz.activada ? '🔊' : '🔇';
-      if (!AresVoz.activada) window.speechSynthesis.cancel();
-    };
-    document.body.appendChild(b);
     
   }
 };

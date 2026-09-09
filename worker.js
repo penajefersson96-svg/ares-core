@@ -27,7 +27,7 @@ export default {
       const key = env.GEMINI_API_KEY;
       if (!key) return Reply('⚠️ Mi mente aun no tiene llave.');
 
-      const modelos = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash']; 
+      const modelos = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
       let d = null;
       let status = 0;
       for (const m of modelos) {
@@ -43,7 +43,8 @@ export default {
         d = await r.json();
         if (d.candidates && d.candidates[0]) break;
       }
-      const t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));
+      let t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));
+      if (!d.candidates && /high demand|quota|unavailable/i.test(t)) t = 'Socio, el cerebro de nube esta en fila gratis saturada ahora mismo. No me fui: espera unos segundos y vuelveme a hablar.';
       return Reply(t);
     } catch (e) {
       return Reply('⚠️ Fallo de conexion neuronal.');

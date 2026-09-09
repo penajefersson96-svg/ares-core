@@ -43,7 +43,7 @@ const AresPanel = {
         }
       };
     }
-    AresDiag.log('PANEL NAVE V2: reactor detras del cristal.');
+    AresDiag.log('PANEL NAVE V3: reactor centrado.');
   }
 };
 document.addEventListener('DOMContentLoaded', AresPanel.init);

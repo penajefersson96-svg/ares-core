@@ -19,6 +19,7 @@ const AresVoz = {
     return 'neutro';
   },
 
+  emojiNombre: { '1faa8': 'piedra', '1f48e': 'diamante', '1f31f': 'estrella', '1f30d': 'mundo', '1f4a1': 'idea', '1f525': 'fuego', '1f680': 'cohete', '1f9e0': 'cerebro', '1f4bb': 'computadora', '1f4f1': 'telefono', '1f3e0': 'casa', '1f512': 'candado', '1f511': 'llave', '2699': 'engranaje' }, 
   sonidoEmoji: (hex) => {
     try {
       AresVoz.audio = AresVoz.audio || new (window.AudioContext || window.webkitAudioContext)();
@@ -68,7 +69,7 @@ const AresVoz = {
     });
     texto = texto.replace(/jefersson/gi, 'Yefersson');
     texto = texto.replace(/[*_#`]/g, '');
-    texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, '');
+    texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
     texto = texto.replace(/\u2026|\.{2,}/g, ', '); 
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00fc ]/gi, '');
     s.cancel();

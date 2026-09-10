@@ -1,4 +1,4 @@
-// panel.js v7 — Abismo Estelar + retoques de Ares (ciclo de auto-mejora completo)
+// panel.js v8 — consola unificada expansiva
 const AresPanel = {
   init: () => {
     const st = document.createElement('style');
@@ -19,7 +19,9 @@ const AresPanel = {
       '.m-ares{border:1px solid rgba(0,255,255,.35);background:rgba(6,16,34,.62);padding:8px 10px;margin:8px 4px;border-radius:8px;box-shadow:0 0 10px rgba(0,255,255,.10);}',
       '.m-tu{border:1px solid rgba(255,179,71,.45);background:rgba(30,18,2,.55);color:#ffd9a0;padding:8px 10px;margin:8px 4px 8px auto;border-radius:8px;max-width:85%;}',
       '.p-hora{opacity:.5;font-size:10px;display:block;}',
-      '#entrada{background:rgba(0,0,0,.72);border:1px solid rgba(0,255,255,.6);color:#9ff;padding:10px;border-radius:6px;}',
+      '.p-consola{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;background:rgba(2,6,14,.72);border:1px solid rgba(0,255,255,.35);border-radius:10px;margin:6px 8px;padding:6px;backdrop-filter:blur(4px);}',
+      '.p-consola #entrada{flex:1 1 140px;min-height:38px;max-height:120px;overflow-y:auto;background:rgba(0,0,0,.6);border:1px solid rgba(0,255,255,.4);color:#9ff;padding:9px;border-radius:6px;font:inherit;resize:none;}',
+      '.p-consola button{flex:0 0 auto;}',
       '#enviar{background:#0ff;color:#00131a;font-weight:bold;border:none;padding:10px 16px;border-radius:6px;}'
     ].join('');
     document.head.appendChild(st);
@@ -72,9 +74,26 @@ const AresPanel = {
         }
       };
     }
-    const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V7: Abismo Estelar con retoques de Ares.'); else setTimeout(avisar, 300); };
+    const viejo = document.getElementById('entrada');
+    if (viejo && viejo.tagName !== 'TEXTAREA') {
+      const ta = document.createElement('textarea');
+      ta.id = 'entrada';
+      ta.placeholder = viejo.placeholder || 'Habla con Ares...';
+      ta.rows = 1;
+      viejo.parentNode.replaceChild(ta, viejo);
+    }
+    const ta3 = document.getElementById('entrada');
+    if (ta3) {
+      const fila = ta3.parentNode;
+      if (fila) fila.className = 'p-consola';
+      ta3.addEventListener('input', () => { ta3.style.height = 'auto'; ta3.style.height = Math.min(120, ta3.scrollHeight) + 'px'; });
+      if (typeof AresCerebro !== 'undefined') {
+        ta3.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } };
+      }
+    }
+    const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V8: consola unificada y expansiva.'); else setTimeout(avisar, 300); };
     avisar();
   }
 };
 document.addEventListener('DOMContentLoaded', AresPanel.init);
-// FIN PANEL V7
+// FIN PANEL V8

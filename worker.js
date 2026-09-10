@@ -1,4 +1,4 @@
-// worker.js v1-restaurado — respuesta completa y confiable
+// worker.js v1-restaurado-bis — comilla fantasma eliminada
 export default {
   async fetch(request, env) {
     const ruta = new URL(request.url).pathname;
@@ -16,6 +16,7 @@ export default {
       const t = r.ok ? await r.text() : 'No pude leer ' + f;
       return new Response(t, { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
     }
+
     if (request.method === 'OPTIONS') {
       return new Response(null, {
         headers: {
@@ -49,11 +50,13 @@ export default {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Peña, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
+            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Pena, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
             contents: contenidos,
           })
         });
-        status = r.status;           try { d = await r.json(); } catch (e) { d = null; }           if (!d) continue;`
+        status = r.status;
+        try { d = await r.json(); } catch (e) { d = null; }
+        if (!d) continue;
         if (d.candidates && d.candidates[0]) break;
       }
       let t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));
@@ -70,3 +73,4 @@ function Reply(t) {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }
+// FIN WORKER BIS

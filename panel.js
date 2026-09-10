@@ -1,4 +1,4 @@
-// panel.js v2 — Orbe como reactor detras del panel de cristal
+// panel.js v5 — panel nave + parche 1 de Ares (robustez y retry)
 const AresPanel = {
   init: () => {
     const st = document.createElement('style');
@@ -44,8 +44,10 @@ const AresPanel = {
           }
         } catch (e) {}
       };
-    const avisar = () => { if (window.AresDiag) AresDiag.log('PANEL NAVE V4: reactor libre en el centro.'); else setTimeout(avisar, 300); };
+    }
+    const avisar = () => { if (window.AresDiag) AresDiag.log('PANEL NAVE V5: parche 1 de Ares a bordo.'); else setTimeout(avisar, 300); };
     avisar();
   }
 };
 document.addEventListener('DOMContentLoaded', AresPanel.init);
+// FIN PANEL V5

@@ -1,4 +1,4 @@
-// voz.js v8 — Parche 2 de Ares (emociones precisas, audio seguro, hook blindado)
+// voz.js v9 — parche 2.5: sonidos reales, sin acotaciones habladas
 const AresVoz = {
   activada: true,
   saltar: false,
@@ -12,7 +12,6 @@ const AresVoz = {
     return window.speechSynthesis.getVoices().find(v => v.name === nombre) || null;
   },
 
-  // [PARCHE 2.1] emociones con \b para limites de palabra (evita falsos positivos tipo "penal")
   emocionDe: (t) => {
     if (/\b(jaja|chiste|broma)\b/.test(t) || /que risa/.test(t)) return 'alegria';
     if (/\b(triste|llor|lamento|pena|duelo|perdio|muerte|extrana|corazon|abrazo)\b/.test(t) || /lo siento|perdon/.test(t)) return 'tristeza';
@@ -32,7 +31,6 @@ const AresVoz = {
     window.speechSynthesis.speak(u);
   },
 
-  // [PARCHE 2.2] AudioContext unico con manejo robusto
   sonidoEmoji: (hex) => {
     try {
       if (!AresVoz.audio || AresVoz.audio.state === 'closed') {
@@ -84,6 +82,7 @@ const AresVoz = {
       }
     });
     texto = texto.replace(/jefersson/gi, 'Yefersson');
+    texto = texto.replace(/\*[^*]+\*/g, ' ');
     texto = texto.replace(/[*_#`]/g, '');
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
@@ -97,6 +96,9 @@ const AresVoz = {
     else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
     else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
     else { u.pitch = 0.9; u.rate = 1; }
+    if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
+    if (emo === 'tristeza') setTimeout(() => AresVoz.sonidoEmoji('1f622'), 200);
+    if (emo === 'emocion') setTimeout(() => AresVoz.sonidoEmoji('1f389'), 150);
     s.speak(u);
   },
 
@@ -119,7 +121,6 @@ const AresVoz = {
     if (AresVoz.soportada) { const s = window.speechSynthesis; s.getVoices(); s.onvoiceschanged = () => s.getVoices(); }
     if (AresVoz.soportada) { const w = new SpeechSynthesisUtterance(' '); w.volume = 0; w.rate = 2; window.speechSynthesis.speak(w); }
     const original = AresCerebro.mostrar;
-    // [PARCHE 2.3] try/catch en el hook para blindar el chat
     AresCerebro.mostrar = (quien, msg) => {
       try {
         original(quien, msg);
@@ -139,4 +140,4 @@ const AresVoz = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);
-// FIN VOZ V8
+// FIN VOZ V9

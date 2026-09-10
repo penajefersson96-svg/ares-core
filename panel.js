@@ -31,19 +31,21 @@ const AresPanel = {
     if (typeof AresCerebro !== 'undefined') {
       const original = AresCerebro.mostrar;
       AresCerebro.mostrar = (q, m) => {
-        original(q, m);
-        const chat = document.getElementById('chat') || document.querySelector('main');
-        const last = chat ? chat.lastElementChild : null;
-        if (last && last.classList) {
-          last.classList.add(q === 'TÚ' ? 'm-tu' : 'm-ares');
-          const t = document.createElement('span');
-          t.className = 'p-hora';
-          t.textContent = new Date().toLocaleTimeString();
-          last.prepend(t);
-        }
+        try {
+          original(q, m);
+          const chat = document.getElementById('chat') || document.querySelector('main');
+          const last = (chat && chat.lastElementChild) ? chat.lastElementChild : null;
+          if (last && last.classList) {
+            last.classList.add(q === 'TÚ' ? 'm-tu' : 'm-ares');
+            const t = document.createElement('span');
+            t.className = 'p-hora';
+            t.textContent = new Date().toLocaleTimeString();
+            last.prepend(t);
+          }
+        } catch (e) {}
       };
-    }
-    AresDiag.log('PANEL NAVE V4: reactor libre en el centro.'); 
+    const avisar = () => { if (window.AresDiag) AresDiag.log('PANEL NAVE V4: reactor libre en el centro.'); else setTimeout(avisar, 300); };
+    avisar();
   }
 };
 document.addEventListener('DOMContentLoaded', AresPanel.init);

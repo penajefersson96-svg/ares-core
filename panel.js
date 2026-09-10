@@ -1,4 +1,4 @@
-// panel.js v6 — Abismo Estelar (diseno de Ares, parche 3)
+// panel.js v7 — Abismo Estelar + retoques de Ares (ciclo de auto-mejora completo)
 const AresPanel = {
   init: () => {
     const st = document.createElement('style');
@@ -33,10 +33,8 @@ const AresPanel = {
       s1.className = 'p-stars';
       const s2 = document.createElement('div');
       s2.className = 'p-stars2';
-      const sombras1 = [];
-      const sombras2 = [];
-      for (let i = 0; i < 40; i++) sombras1.push(Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(255,255,255,' + (0.4 + Math.random() * 0.6).toFixed(2) + ')');
-      for (let i = 0; i < 60; i++) sombras2.push(Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(150,255,255,' + (0.3 + Math.random() * 0.5).toFixed(2) + ')');
+      const sombras1 = Array.from({length: 40}, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(255,255,255,' + (0.4 + Math.random() * 0.6).toFixed(2) + ')');
+      const sombras2 = Array.from({length: 60}, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(150,255,255,' + (0.3 + Math.random() * 0.5).toFixed(2) + ')');
       s1.style.boxShadow = sombras1.join(',');
       s2.style.boxShadow = sombras2.join(',');
       ab.appendChild(s1);
@@ -60,20 +58,23 @@ const AresPanel = {
         try {
           original(q, m);
           const chat = document.getElementById('chat') || document.querySelector('main');
-          const last = (chat && chat.lastElementChild) ? chat.lastElementChild : null;
-          if (last && last.classList) {
+          if (!chat || !chat.lastElementChild) return;
+          const last = chat.lastElementChild;
+          if (last.classList) {
             last.classList.add(q === 'TÚ' ? 'm-tu' : 'm-ares');
             const t = document.createElement('span');
             t.className = 'p-hora';
             t.textContent = new Date().toLocaleTimeString();
             last.prepend(t);
           }
-        } catch (e) {}
+        } catch (e) {
+          if (typeof AresDiag !== 'undefined') AresDiag.log('AresPanel error: ' + e.message);
+        }
       };
     }
-    const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V6: Abismo Estelar encendido.'); else setTimeout(avisar, 300); };
+    const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V7: Abismo Estelar con retoques de Ares.'); else setTimeout(avisar, 300); };
     avisar();
   }
 };
 document.addEventListener('DOMContentLoaded', AresPanel.init);
-// FIN PANEL V6
+// FIN PANEL V7

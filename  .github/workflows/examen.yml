@@ -2,6 +2,7 @@ name: examen-campito
 on:
   push:
     branches: [campito]
+  workflow_dispatch:
 jobs:
   examinar:
     runs-on: ubuntu-latest

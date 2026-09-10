@@ -35,6 +35,24 @@ const AresCerebro = {
     AresCerebro.mostrar('TÚ', texto);
     input.value = '';
     input.blur();
+    const mOjos = texto.match(/^l[ée]ete\s+([\w.\-]+)$/i);
+    if (mOjos) {
+      try {
+        const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mOjos[1]));
+        const codigo = await ro.text();
+        const promptOjos = 'Este es tu archivo actual ' + mOjos[1] + ':\n\n' + codigo.slice(0, 6000) + '\n\nRevisalo como ingeniero de ti mismo: propone hasta 3 mejoras concretas (que linea, que cambio, por que). Breve y sin inventar.';
+        const res2 = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptOjos, historial: hist, hechos })
+        });
+        const d5 = await res2.json();
+        AresCerebro.mostrar('ARES', d5.respuesta || 'No pude revisarme ahora.');
+      } catch (e) {
+        AresCerebro.mostrar('ARES', 'Mis ojos aun no ven, socio: revisa el despliegue.');
+      }
+      return;
+    }
     try {
       const hilo = hist.map(h => h.q + ': ' + h.t).join('\n');
         const promptCompleto = (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;

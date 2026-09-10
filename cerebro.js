@@ -36,11 +36,11 @@ const AresCerebro = {
     input.value = '';
     input.blur();
     try {
+      const hilo = hist.map(h => h.q + ': ' + h.t).join('\n');
+        const promptCompleto = (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        const hilo = hist.map(h => h.q + ': ' + h.t).join('\n');
-        const promptCompleto = (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;
         body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos })
       });
       if (!res.ok) throw new Error('Sin servidor');

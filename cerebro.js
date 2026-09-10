@@ -1,5 +1,13 @@
-// cerebro.js v4 — streaming robusto + voz con red de seguridad
+// cerebro.js v5 — Memoria Real v1 (hilo de conversacion)
 const AresCerebro = {
+  HIST: 'ares_historial',
+  leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
+  recordar: (quien, t) => {
+    const h = AresCerebro.leerHist();
+    h.push({ q: quien, t: String(t).slice(0, 600) });
+    while (h.length > 24) h.shift();
+    localStorage.setItem(AresCerebro.HIST, JSON.stringify(h));
+  },
   mostrar: (quien, msg) => {
     const chat = document.getElementById('chat');
     const p = document.createElement('p');
@@ -7,6 +15,7 @@ const AresCerebro = {
     p.style.color = quien === 'ARES' ? '#fff' : '#888';
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
+    if (quien === 'TÚ' || quien === 'ARES') AresCerebro.recordar(quien, msg);
   },
   pensarLocal: (texto) => {
     texto = texto.toLowerCase();
@@ -20,6 +29,9 @@ const AresCerebro = {
     const input = document.getElementById('entrada');
     const texto = input.value.trim();
     if (!texto) return;
+    const hist = AresCerebro.leerHist().slice(-10);
+    let hechos = '';
+    try { if (window.AresMemoria) hechos = JSON.stringify(AresMemoria.hechos || AresMemoria.datos || AresMemoria.memoria || {}); } catch (e) {}
     AresCerebro.mostrar('TÚ', texto);
     input.value = '';
     input.blur();
@@ -27,7 +39,7 @@ const AresCerebro = {
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: texto })
+        body: JSON.stringify({ prompt: texto, historial: hist, hechos })
       });
       if (!res.ok) throw new Error('Sin servidor');
       const ct = res.headers.get('content-type') || '';
@@ -69,6 +81,7 @@ const AresCerebro = {
         AresVoz.ultimo = full.toLowerCase();
         if (!hablo && full.trim()) AresVoz.hablar(full);
       }
+      if (full.trim()) AresCerebro.recordar('ARES', full);
     } catch (error) {
       AresCerebro.pensarLocal(texto);
     }
@@ -83,4 +96,4 @@ const AresCerebro = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V4
+// FIN CEREBRO V5

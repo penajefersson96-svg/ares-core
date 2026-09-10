@@ -11,7 +11,7 @@ const AresCerebro = {
   mostrar: (quien, msg) => {
     const chat = document.getElementById('chat');
     const p = document.createElement('p');
-    p.innerHTML = '<strong>' + quien + ':</strong> ' + msg;
+    p.innerHTML = '<strong>' + quien + ':</strong> ' + String(msg).replace(/\n/g, '<br>');
     p.style.color = quien === 'ARES' ? '#fff' : '#888';
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
@@ -40,14 +40,13 @@ const AresCerebro = {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mEspejo[1]));
         const codigo = await ro.text();
-        const promptEspejo = 'Transcribe este codigo exactamente igual, caracter por caracter. No anadas explicaciones, no resumas, no uses markdown ni bloques de codigo. Solo devuelve el texto puro:\n\n' + codigo.slice(0, 6000);
-        const res2 = await fetch('https://ares.penajefersson96.workers.dev', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: promptEspejo, historial: hist, hechos })
-        });
-        const d5 = await res2.json();
-        AresCerebro.mostrar('ARES', d5.respuesta || 'El espejo se rompio.');
+        const lineas = codigo.split('\n').map((l, i) => (i + 1) + ': ' + l).join('\n');
+        const seguro = lineas.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        const chat = document.getElementById('chat');
+        const p = document.createElement('p');
+        p.innerHTML = '<strong>ARES (espejo fiel):</strong><br><pre style="white-space:pre-wrap;word-break:break-word;font-size:10px;color:#9ff;background:rgba(0,20,30,.7);padding:6px;border:1px solid rgba(0,255,255,.3);">' + seguro + '</pre>';
+        chat.appendChild(p);
+        chat.scrollTop = chat.scrollHeight;
       } catch (e) {
         AresCerebro.mostrar('ARES', 'Mis ojos no pudieron abrir el espejo.');
       }

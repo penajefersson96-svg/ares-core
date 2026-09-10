@@ -155,7 +155,7 @@ const inCamara = mkIn('image/*', 'environment');
 const inVideo = mkIn('video/*', 'environment');
     const menu = document.createElement('div');
     menu.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:130px;z-index:5;background:rgba(2,6,14,.95);border:1px solid rgba(0,255,255,.4);border-radius:10px;padding:8px;';
-    menu.innerHTML = '<button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Elegir de mi telefono</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Camara (foto con vuelta)</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Grabar video</button>';
+    menu.innerHTML = '<button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Elegir de mi telefono</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Camara</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Grabar video</button>';
     const bots = menu.querySelectorAll('button');
     const inputs = [inGaleria, inCamara, inVideo];
     bots.forEach((b, i) => { b.onclick = () => { menu.style.display = 'none'; inputs[i].click(); }; });

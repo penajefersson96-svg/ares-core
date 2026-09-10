@@ -19,7 +19,7 @@ const AresPanel = {
       '.m-ares{border:1px solid rgba(0,255,255,.35);background:rgba(6,16,34,.62);padding:8px 10px;margin:8px 4px;border-radius:8px;box-shadow:0 0 10px rgba(0,255,255,.10);}',
       '.m-tu{border:1px solid rgba(255,179,71,.45);background:rgba(30,18,2,.55);color:#ffd9a0;padding:8px 10px;margin:8px 4px 8px auto;border-radius:8px;max-width:85%;}',
       '.p-hora{opacity:.5;font-size:10px;display:block;}',
-      '.p-consola{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;background:rgba(2,6,14,.72);border:1px solid rgba(0,255,255,.35);border-radius:10px;margin:6px 8px;padding:6px;backdrop-filter:blur(4px);}',
+      '.p-consola #entrada{flex:1 1 100%;min-height:38px;max-height:96px;overflow-y:auto;background:rgba(0,0,0,.6);border:1px solid rgba(0,255,255,.4);color:#9ff;padding:9px;border-radius:6px;font:inherit;resize:none;}',
       '.p-consola #entrada{flex:1 1 140px;min-height:38px;max-height:120px;overflow-y:auto;background:rgba(0,0,0,.6);border:1px solid rgba(0,255,255,.4);color:#9ff;padding:9px;border-radius:6px;font:inherit;resize:none;}',
       '.p-consola button{flex:0 0 auto;}',
       '#enviar{background:#0ff;color:#00131a;font-weight:bold;border:none;padding:10px 16px;border-radius:6px;}'

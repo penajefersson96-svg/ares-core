@@ -23,7 +23,13 @@ export default {
     }
 
     try {
-      const { prompt } = await request.json();
+      const cuerpo = await request.json();
+      const prompt = String(cuerpo.prompt || '');
+      const hist = Array.isArray(cuerpo.historial) ? cuerpo.historial.slice(-10) : [];
+      const hechos = (cuerpo.hechos && cuerpo.hechos !== '{}') ? String(cuerpo.hechos) : '';
+      const promptFinal = (hechos ? '[Recuerdos permanentes de tu socio: ' + hechos + ']\n' : '') + prompt;
+      const contenidos = hist.map(h => ({ role: (h.q === 'TÚ' || h.q === 'TU') ? 'user' : 'model', parts: [{ text: String(h.t || '').slice(0, 500) }] }));
+      contenidos.push({ role: 'user', parts: [{ text: promptFinal }] });
       const key = env.GEMINI_API_KEY;
       if (!key) return Reply('Aviso: Mi mente aun no tiene llave.');
 
@@ -36,7 +42,7 @@ export default {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Peña, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
-            contents: [{ parts: [{ text: prompt }] }]
+            contents: contenidos,
           })
         });
         status = r.status;

@@ -50,22 +50,27 @@ export default {
 
       const encoder = new TextEncoder();
       const decoder = new TextDecoder();
+      let buf = '';
+      const emitir = (linea, controller) => {
+        if (!linea.startsWith('data: ')) return;
+        try {
+          const data = JSON.parse(linea.slice(6));
+          const palabra = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (palabra) controller.enqueue(encoder.encode('data: ' + JSON.stringify({ text: palabra }) + '\n\n'));
+        } catch (e) {}
+      };
       const transformStream = new TransformStream({
-        async transform(chunk, controller) {
-          const text = decoder.decode(chunk);
-          const lines = text.split('\n').filter(line => line.trim() !== '');
-          
-          for (const line of lines) {
-            if (line.startsWith('data: ')) {
-              try {
-                const data = JSON.parse(line.slice(6));
-                const palabra = data.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (palabra) {
-                  controller.enqueue(encoder.encode('data: ' + JSON.stringify({ text: palabra }) + '\n\n'));
-                }
-              } catch (e) {}
-            }
+        transform(chunk, controller) {
+          buf += decoder.decode(chunk, { stream: true });
+          let i = buf.indexOf('\n');
+          while (i >= 0) {
+            emitir(buf.slice(0, i).trim(), controller);
+            buf = buf.slice(i + 1);
+            i = buf.indexOf('\n');
           }
+        },
+        flush(controller) {
+          emitir(buf.trim(), controller);
         }
       });
 

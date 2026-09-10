@@ -52,7 +52,7 @@ const AresCerebro = {
       }
       return;
     }
-    const mOjos = texto.match(/^l[ée]ete\s+([\w.\-]+)$/i);
+    const mOjos = texto.match(/l[ée]ete\s+(?:el\s+)?([\w.\-]+\.(?:js|css|html|json|py|webmanifest))/i);
     if (mOjos) {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mOjos[1]));

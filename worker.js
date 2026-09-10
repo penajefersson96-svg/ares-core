@@ -53,8 +53,7 @@ export default {
             contents: contenidos,
           })
         });
-        status = r.status;
-        d = await r.json();
+        status = r.status;           try { d = await r.json(); } catch (e) { d = null; }           if (!d) continue;`
         if (d.candidates && d.candidates[0]) break;
       }
       let t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));

@@ -21,6 +21,9 @@ const AresPanel = {
       '.p-hora{opacity:.5;font-size:10px;display:block;}',
       '#entrada{background:rgba(0,0,0,.72);border:1px solid rgba(0,255,255,.6);color:#9ff;padding:10px;border-radius:6px;}',
       '#enviar{background:#0ff;color:#00131a;font-weight:bold;border:none;padding:10px 16px;border-radius:6px;}'
+      '.p-consola{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:6px;align-items:flex-end;background:rgba(2,6,14,.72);border:1px solid rgba(0,255,255,.35);border-radius:10px;margin:6px 8px;padding:6px;backdrop-filter:blur(4px);}',
+'.p-consola #entrada{flex:1 1 140px;min-height:38px;max-height:120px;overflow-y:auto;background:rgba(0,0,0,.6);border:1px solid rgba(0,255,255,.4);color:#9ff;padding:9px;border-radius:6px;font:inherit;resize:none;}',
+'.p-consola button{flex:0 0 auto;}',
     ].join('');
     document.head.appendChild(st);
     if (!document.getElementById('p-abismo')) {
@@ -71,6 +74,23 @@ const AresPanel = {
           if (typeof AresDiag !== 'undefined') AresDiag.log('AresPanel error: ' + e.message);
         }
       };
+    }
+    const viejo = document.getElementById('entrada');
+    if (viejo && viejo.tagName !== 'TEXTAREA') {
+      const ta = document.createElement('textarea');
+      ta.id = 'entrada';
+      ta.placeholder = viejo.placeholder || 'Habla con Ares...';
+      ta.rows = 1;
+      viejo.parentNode.replaceChild(ta, viejo);
+    }
+    const ta3 = document.getElementById('entrada');
+    if (ta3) {
+      const fila = ta3.parentNode;
+      if (fila) fila.className = 'p-consola';
+      ta3.addEventListener('input', () => { ta3.style.height = 'auto'; ta3.style.height = Math.min(120, ta3.scrollHeight) + 'px'; });
+      if (typeof AresCerebro !== 'undefined') {
+        ta3.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } };
+      }
     }
     const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V7: Abismo Estelar con retoques de Ares.'); else setTimeout(avisar, 300); };
     avisar();

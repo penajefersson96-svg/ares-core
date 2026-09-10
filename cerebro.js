@@ -162,7 +162,7 @@ AresCerebro.img = null;
     const btn = document.getElementById('enviar');
     if (btn && input) {
       btn.onclick = AresCerebro.enviar;
-      input.onkeydown = (e) => { if (e.key === 'Enter') AresCerebro.enviar(); };
+      input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } }; 
     }
   }
 };

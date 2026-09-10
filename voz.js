@@ -1,4 +1,4 @@
-// voz.js v7 — Parte 1
+// voz.js v8 — Parche 2 de Ares (emociones precisas, audio seguro, hook blindado)
 const AresVoz = {
   activada: true,
   saltar: false,
@@ -12,14 +12,16 @@ const AresVoz = {
     return window.speechSynthesis.getVoices().find(v => v.name === nombre) || null;
   },
 
+  // [PARCHE 2.1] emociones con \b para limites de palabra (evita falsos positivos tipo "penal")
   emocionDe: (t) => {
-    if (/jaja|chiste|broma|que risa/.test(t)) return 'alegria';
-    if (/triste|llor|lo siento|perdon|lamento|pena|duelo|perdio|muerte|extrana|corazon|abrazo/.test(t)) return 'tristeza'; 
-    if (/increible|genial|emocion|victoria|logramos/.test(t)) return 'emocion';
+    if (/\b(jaja|chiste|broma)\b/.test(t) || /que risa/.test(t)) return 'alegria';
+    if (/\b(triste|llor|lamento|pena|duelo|perdio|muerte|extrana|corazon|abrazo)\b/.test(t) || /lo siento|perdon/.test(t)) return 'tristeza';
+    if (/\b(increible|genial|emocion|victoria|logramos)\b/.test(t)) return 'emocion';
     return 'neutro';
   },
 
-  emojiNombre: { '1faa8': 'piedra', '1f48e': 'diamante', '1f31f': 'estrella', '1f30d': 'mundo', '1f4a1': 'idea', '1f525': 'fuego', '1f680': 'cohete', '1f9e0': 'cerebro', '1f4bb': 'computadora', '1f4f1': 'telefono', '1f3e0': 'casa', '1f512': 'candado', '1f511': 'llave', '2699': 'engranaje' }, 
+  emojiNombre: { '1faa8': 'piedra', '1f48e': 'diamante', '1f31f': 'estrella', '1f30d': 'mundo', '1f4a1': 'idea', '1f525': 'fuego', '1f680': 'cohete', '1f9e0': 'cerebro', '1f4bb': 'computadora', '1f4f1': 'telefono', '1f3e0': 'casa', '1f512': 'candado', '1f511': 'llave', '2699': 'engranaje' },
+
   frag: (t) => {
     if (!AresVoz.activada || !AresVoz.soportada) return;
     const u = new SpeechSynthesisUtterance(t);
@@ -29,11 +31,15 @@ const AresVoz = {
     u.rate = emo === 'alegria' ? 1.08 : emo === 'tristeza' ? 0.85 : 1;
     window.speechSynthesis.speak(u);
   },
+
+  // [PARCHE 2.2] AudioContext unico con manejo robusto
   sonidoEmoji: (hex) => {
     try {
-      AresVoz.audio = AresVoz.audio || new (window.AudioContext || window.webkitAudioContext)();
+      if (!AresVoz.audio || AresVoz.audio.state === 'closed') {
+        AresVoz.audio = new (window.AudioContext || window.webkitAudioContext)();
+      }
       const c = AresVoz.audio;
-      if (c.state === 'suspended') c.resume(); 
+      if (c.state === 'suspended') c.resume();
       const mapa = {
         '1f602': [600, 500, 400],
         '1f923': [650, 520, 420],
@@ -60,6 +66,7 @@ const AresVoz = {
       });
     } catch (e) {}
   },
+
   hablar: (texto) => {
     if (!AresVoz.activada || !AresVoz.soportada) return;
     const s = window.speechSynthesis;
@@ -79,8 +86,8 @@ const AresVoz = {
     texto = texto.replace(/jefersson/gi, 'Yefersson');
     texto = texto.replace(/[*_#`]/g, '');
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
-    texto = texto.replace(/\u2026|\.{2,}/g, ', '); 
-    AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9\u00e1\u00e9\u00ed\u00f3\u00fa\u00f1\u00fc ]/gi, '');
+    texto = texto.replace(/\u2026|\.{2,}/g, ', ');
+    AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9áéíóúñü ]/gi, '');
     s.cancel();
     const u = new SpeechSynthesisUtterance(texto);
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es'));
@@ -112,21 +119,24 @@ const AresVoz = {
     if (AresVoz.soportada) { const s = window.speechSynthesis; s.getVoices(); s.onvoiceschanged = () => s.getVoices(); }
     if (AresVoz.soportada) { const w = new SpeechSynthesisUtterance(' '); w.volume = 0; w.rate = 2; window.speechSynthesis.speak(w); }
     const original = AresCerebro.mostrar;
+    // [PARCHE 2.3] try/catch en el hook para blindar el chat
     AresCerebro.mostrar = (quien, msg) => {
-      original(quien, msg);
-      if (quien === 'TÚ') {
-        const t = msg.toLowerCase().trim();
-        if (t === 'voces') { AresVoz.saltar = true; AresVoz.listar(); }
-        const m = t.match(/^voz (\d+)$/);
-        if (m) { AresVoz.saltar = true; AresVoz.elegir(Number(m[1])); }
-        if (t === 'silencio') { AresVoz.activada = false; window.speechSynthesis.cancel(); }
+      try {
+        original(quien, msg);
+        if (quien === 'TÚ') {
+          const t = msg.toLowerCase().trim();
+          if (t === 'voces') { AresVoz.saltar = true; AresVoz.listar(); }
+          const m = t.match(/^voz (\d+)$/);
+          if (m) { AresVoz.saltar = true; AresVoz.elegir(Number(m[1])); }
+          if (t === 'silencio') { AresVoz.activada = false; window.speechSynthesis.cancel(); }
           if (t === 'habla') { AresVoz.activada = true; }
-      }
-      if (quien === 'ARES') {
-        if (AresVoz.saltar) { AresVoz.saltar = false; } else { AresVoz.hablar(msg); }
-      }
+        }
+        if (quien === 'ARES') {
+          if (AresVoz.saltar) { AresVoz.saltar = false; } else { AresVoz.hablar(msg); }
+        }
+      } catch (e) {}
     };
-    
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);
+// FIN VOZ V8

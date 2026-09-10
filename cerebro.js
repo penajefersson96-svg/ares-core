@@ -1,4 +1,4 @@
-// cerebro.js v3 — streaming + voz por frases
+// cerebro.js v4 — streaming robusto + voz con red de seguridad
 const AresCerebro = {
   mostrar: (quien, msg) => {
     const chat = document.getElementById('chat');
@@ -30,6 +30,12 @@ const AresCerebro = {
         body: JSON.stringify({ prompt: texto })
       });
       if (!res.ok) throw new Error('Sin servidor');
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const d4 = await res.json();
+        AresCerebro.mostrar('ARES', d4.respuesta);
+        return;
+      }
       const chat = document.getElementById('chat');
       const p = document.createElement('p');
       p.innerHTML = '<strong>ARES:</strong> ';
@@ -40,6 +46,9 @@ const AresCerebro = {
       let buffer = '';
       let frase = '';
       let full = '';
+      let hablo = false;
+      const decir = (t) => { if (window.AresVoz && AresVoz.frag) { try { AresVoz.frag(t); hablo = true; } catch (e) {} } };
+      const pintar = (t) => { p.innerHTML += t; full += t; frase += t; const m2 = frase.match(/[^.!?…\n]+[.!?…]+/); if (m2) { decir(m2[0]); frase = frase.slice(m2[0].length); } chat.scrollTop = chat.scrollHeight; };
       while (true) {
         const r2 = await reader.read();
         if (r2.done) break;
@@ -48,22 +57,18 @@ const AresCerebro = {
         buffer = lines.pop();
         for (const line of lines) {
           if (line.startsWith('data: ')) {
-            try {
-              const data = JSON.parse(line.slice(6));
-              if (data.text) {
-                p.innerHTML += data.text;
-                full += data.text;
-                frase += data.text;
-                const m2 = frase.match(/[^.!?…\n]+[.!?…]+/);
-                if (m2 && window.AresVoz) { AresVoz.frag(m2[0]); frase = frase.slice(m2[0].length); }
-                chat.scrollTop = chat.scrollHeight;
-              }
-            } catch (e) {}
+            try { const data = JSON.parse(line.slice(6)); if (data.text) pintar(data.text); } catch (e) {}
           }
         }
       }
-      if (frase.trim() && window.AresVoz) AresVoz.frag(frase);
-      if (window.AresVoz) AresVoz.ultimo = full.toLowerCase();
+      if (buffer.startsWith('data: ')) {
+        try { const d3 = JSON.parse(buffer.slice(6)); if (d3.text) pintar(d3.text); } catch (e) {}
+      }
+      if (frase.trim()) decir(frase);
+      if (window.AresVoz) {
+        AresVoz.ultimo = full.toLowerCase();
+        if (!hablo && full.trim()) AresVoz.hablar(full);
+      }
     } catch (error) {
       AresCerebro.pensarLocal(texto);
     }
@@ -78,4 +83,4 @@ const AresCerebro = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V3
+// FIN CEREBRO V4

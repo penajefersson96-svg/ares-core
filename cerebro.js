@@ -30,6 +30,12 @@ const AresCerebro = {
         body: JSON.stringify({ prompt: texto })
       });
       if (!res.ok) throw new Error('Sin servidor');
+      const ct = res.headers.get('content-type') || '';
+      if (ct.includes('application/json')) {
+        const d4 = await res.json();
+        AresCerebro.mostrar('ARES', d4.respuesta);
+        return;
+      }
       const chat = document.getElementById('chat');
       const p = document.createElement('p');
       p.innerHTML = '<strong>ARES:</strong> ';

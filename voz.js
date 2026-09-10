@@ -84,6 +84,7 @@ const AresVoz = {
       }
     });
     texto = texto.replace(/jefersson/gi, 'Yefersson');
+    texto = texto.replace(/*[^*]+*/g, ' ');`
     texto = texto.replace(/[*_#`]/g, '');
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
@@ -97,6 +98,9 @@ const AresVoz = {
     else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
     else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
     else { u.pitch = 0.9; u.rate = 1; }
+    if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
+    if (emo === 'tristeza') setTimeout(() => AresVoz.sonidoEmoji('1f622'), 200);
+    if (emo === 'emocion') setTimeout(() => AresVoz.sonidoEmoji('1f389'), 150);
     s.speak(u);
   },
 

@@ -15,4 +15,3 @@ jobs:
           python-version: '3.12'
       - name: Examen de Ares
         run: python examen.py
-        

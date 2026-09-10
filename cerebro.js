@@ -1,10 +1,11 @@
 // cerebro.js v5 — Memoria Real v1 (hilo de conversacion)
 const AresCerebro = {
   HIST: 'ares_historial',
+  img: null,
   leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
   recordar: (quien, t) => {
     const h = AresCerebro.leerHist();
-    h.push({ q: quien, t: String(t).slice(0, 600) });
+    h.push({ q: quien, t: String(t).indexOf('data:image') >= 0 ? '[foto adjunta]' : String(t).slice(0, 600) });
     while (h.length > 24) h.shift();
     localStorage.setItem(AresCerebro.HIST, JSON.stringify(h));
   },
@@ -32,7 +33,7 @@ const AresCerebro = {
     const hist = AresCerebro.leerHist().slice(-10);
     let hechos = '';
     try { if (window.AresMemoria) hechos = JSON.stringify(AresMemoria.hechos || AresMemoria.datos || AresMemoria.memoria || {}); } catch (e) {}
-    AresCerebro.mostrar('TÚ', texto);
+    AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
     input.value = '';
     input.blur();
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
@@ -76,8 +77,9 @@ const AresCerebro = {
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos })
-      });
+        body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos, imagen: AresCerebro.img || null })
+});
+AresCerebro.img = null;
       if (!res.ok) throw new Error('Sin servidor');
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
@@ -124,6 +126,38 @@ const AresCerebro = {
     }
   },
   init: () => {
+    const cam = document.createElement('button');
+    cam.textContent = '📷';
+    cam.style.cssText = 'background:none;border:1px solid #0ff;color:#0ff;padding:10px 12px;border-radius:6px;';
+    const file = document.createElement('input');
+    file.type = 'file';
+    file.accept = 'image/*';
+    file.style.display = 'none';
+    cam.onclick = () => file.click();
+    file.onchange = () => {
+      const f = file.files && file.files[0];
+      if (!f) return;
+      const rd = new FileReader();
+      rd.onload = () => {
+        const im = new Image();
+        im.onload = () => {
+          const max = 768;
+          const esc = Math.min(1, max / Math.max(im.width, im.height));
+          const cv = document.createElement('canvas');
+          cv.width = Math.round(im.width * esc);
+          cv.height = Math.round(im.height * esc);
+          cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+          AresCerebro.img = { mime: 'image/jpeg', data: cv.toDataURL('image/jpeg', 0.7).split(',')[1] };
+          AresCerebro.mostrar('ARES', 'Imagen lista y comprimida para cuidar tus datos. Escribe tu pregunta y la envio con ella.');
+        };
+        im.src = rd.result;
+      };
+      rd.readAsDataURL(f);
+      file.value = '';
+    };
+    const btnOk = document.getElementById('enviar');
+    if (btnOk && btnOk.parentNode) btnOk.parentNode.insertBefore(cam, btnOk);
+    document.body.appendChild(file);
     const input = document.getElementById('entrada');
     const btn = document.getElementById('enviar');
     if (btn && input) {

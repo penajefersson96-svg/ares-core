@@ -35,6 +35,24 @@ const AresCerebro = {
     AresCerebro.mostrar('TÚ', texto);
     input.value = '';
     input.blur();
+    const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
+    if (mEspejo) {
+      try {
+        const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mEspejo[1]));
+        const codigo = await ro.text();
+        const promptEspejo = 'Transcribe este codigo exactamente igual, caracter por caracter. No anadas explicaciones, no resumas, no uses markdown ni bloques de codigo. Solo devuelve el texto puro:\n\n' + codigo.slice(0, 6000);
+        const res2 = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: promptEspejo, historial: hist, hechos })
+        });
+        const d5 = await res2.json();
+        AresCerebro.mostrar('ARES', d5.respuesta || 'El espejo se rompio.');
+      } catch (e) {
+        AresCerebro.mostrar('ARES', 'Mis ojos no pudieron abrir el espejo.');
+      }
+      return;
+    }
     const mOjos = texto.match(/^l[ée]ete\s+([\w.\-]+)$/i);
     if (mOjos) {
       try {

@@ -126,19 +126,15 @@ AresCerebro.img = null;
     }
   },
   init: () => {
-    const cam = document.createElement('button');
-    cam.textContent = '📷';
-    cam.style.cssText = 'background:none;border:1px solid #0ff;color:#0ff;padding:10px 12px;border-radius:6px;';
-    const file = document.createElement('input');
-    file.type = 'file';
-    file.accept = 'image/*';
-    file.style.display = 'none';
-    cam.onclick = () => file.click();
-    file.onchange = () => {
-      const f = file.files && file.files[0];
+    const listo = (mime, data) => { AresCerebro.img = { mime: mime, data: data }; AresCerebro.mostrar('ARES', 'Archivo listo: se ira con tu proximo mensaje.'); };
+    const leer = (f, comprimir) => {
       if (!f) return;
+      const wifi = !!(navigator.connection && navigator.connection.type === 'wifi');
+      const tope = wifi ? 14 * 1024 * 1024 : 8 * 1024 * 1024;
+      if (f.size > tope) { AresCerebro.mostrar('ARES', 'Pesa ' + Math.round(f.size / 1048576) + ' MB y hoy voy con ' + (wifi ? 'wifi (tope 14 MB)' : 'datos (tope 8 MB)') + '. Prueba con algo mas ligero.'); return; }
       const rd = new FileReader();
       rd.onload = () => {
+        if (!comprimir) { listo(f.type || 'video/mp4', String(rd.result).split(',')[1]); return; }
         const im = new Image();
         im.onload = () => {
           const max = 768;
@@ -147,17 +143,34 @@ AresCerebro.img = null;
           cv.width = Math.round(im.width * esc);
           cv.height = Math.round(im.height * esc);
           cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
-          AresCerebro.img = { mime: 'image/jpeg', data: cv.toDataURL('image/jpeg', 0.7).split(',')[1] };
-          AresCerebro.mostrar('ARES', 'Imagen lista y comprimida para cuidar tus datos. Escribe tu pregunta y la envio con ella.');
+          listo('image/jpeg', cv.toDataURL('image/jpeg', 0.7).split(',')[1]);
         };
         im.src = rd.result;
       };
       rd.readAsDataURL(f);
-      file.value = '';
     };
+    const mkIn = (accept, capture) => { const i = document.createElement('input'); i.type = 'file'; i.accept = accept; if (capture) i.capture = capture; i.style.display = 'none'; document.body.appendChild(i); return i; };
+    const inGaleria = mkIn('image/*,video/*', '');
+    const inFrente = mkIn('image/*', 'user');
+    const inAtras = mkIn('image/*', 'environment');
+    const inVideo = mkIn('video/*', 'environment');
+    const menu = document.createElement('div');
+    menu.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:130px;z-index:5;background:rgba(2,6,14,.95);border:1px solid rgba(0,255,255,.4);border-radius:10px;padding:8px;';
+    menu.innerHTML = '<button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Elegir de mi telefono</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Foto frontal (verme la cara)</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Foto trasera (ver mi mundo)</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Grabar video</button>';
+    const bots = menu.querySelectorAll('button');
+    const inputs = [inGaleria, inFrente, inAtras, inVideo];
+    bots.forEach((b, i) => { b.onclick = () => { menu.style.display = 'none'; inputs[i].click(); }; });
+    document.body.appendChild(menu);
+    const cam = document.createElement('button');
+    cam.textContent = '📷';
+    cam.style.cssText = 'background:none;border:1px solid #0ff;color:#0ff;padding:10px 12px;border-radius:6px;';
+    cam.onclick = () => { menu.style.display = menu.style.display === 'none' ? 'block' : 'none'; };
+    inGaleria.onchange = () => { const f = inGaleria.files[0]; leer(f, f && f.type.startsWith('image/')); inGaleria.value = ''; };
+    inFrente.onchange = () => { leer(inFrente.files[0], true); inFrente.value = ''; };
+    inAtras.onchange = () => { leer(inAtras.files[0], true); inAtras.value = ''; };
+    inVideo.onchange = () => { leer(inVideo.files[0], false); inVideo.value = ''; };
     const btnOk = document.getElementById('enviar');
     if (btnOk && btnOk.parentNode) btnOk.parentNode.insertBefore(cam, btnOk);
-    document.body.appendChild(file);
     const input = document.getElementById('entrada');
     const btn = document.getElementById('enviar');
     if (btn && input) {

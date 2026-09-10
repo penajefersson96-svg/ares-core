@@ -27,3 +27,8 @@ except Exception as e:
 
 print('VEREDICTO: ' + ('APTO PARA EL CREADOR' if not fallos else 'NO APTO: ' + ', '.join(fallos)))
 sys.exit(1 if fallos else 0)
+# turno 3
+# turno 4
+# turno 5
+# turno 6
+# turno 7

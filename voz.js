@@ -20,6 +20,15 @@ const AresVoz = {
   },
 
   emojiNombre: { '1faa8': 'piedra', '1f48e': 'diamante', '1f31f': 'estrella', '1f30d': 'mundo', '1f4a1': 'idea', '1f525': 'fuego', '1f680': 'cohete', '1f9e0': 'cerebro', '1f4bb': 'computadora', '1f4f1': 'telefono', '1f3e0': 'casa', '1f512': 'candado', '1f511': 'llave', '2699': 'engranaje' }, 
+  frag: (t) => {
+    if (!AresVoz.activada || !AresVoz.soportada) return;
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'es-ES';
+    const emo = AresVoz.emocionDe(t);
+    u.pitch = emo === 'alegria' ? 1.25 : emo === 'tristeza' ? 0.75 : 1;
+    u.rate = emo === 'alegria' ? 1.08 : emo === 'tristeza' ? 0.85 : 1;
+    window.speechSynthesis.speak(u);
+  },
   sonidoEmoji: (hex) => {
     try {
       AresVoz.audio = AresVoz.audio || new (window.AudioContext || window.webkitAudioContext)();

@@ -38,7 +38,9 @@ export default {
       const hechos = (cuerpo.hechos && cuerpo.hechos !== '{}') ? String(cuerpo.hechos) : '';
       const promptFinal = (hechos ? '[Recuerdos permanentes de tu socio: ' + hechos + ']\n' : '') + prompt;
       const contenidos = hist.map(h => ({ role: (h.q === 'TÚ' || h.q === 'TU') ? 'user' : 'model', parts: [{ text: String(h.t || '').slice(0, 500) }] }));
-      contenidos.push({ role: 'user', parts: [{ text: promptFinal }] });
+      const partes = [{ text: promptFinal }];
+if (cuerpo.imagen && cuerpo.imagen.data && cuerpo.imagen.mime) partes.push({ inline_data: { mime_type: cuerpo.imagen.mime, data: cuerpo.imagen.data } });
+contenidos.push({ role: 'user', parts: partes });
       const key = env.GEMINI_API_KEY;
       if (!key) return Reply('Aviso: Mi mente aun no tiene llave.');
 

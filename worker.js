@@ -39,6 +39,7 @@ export default {
       const promptFinal = (hechos ? '[Recuerdos permanentes de tu socio: ' + hechos + ']\n' : '') + prompt;
       const contenidos = hist.map(h => ({ role: (h.q === 'TÚ' || h.q === 'TU') ? 'user' : 'model', parts: [{ text: String(h.t || '').slice(0, 500) }] }));
       const partes = [{ text: promptFinal }];
+if (cuerpo.cara_ref) partes.unshift({ inline_data: { mime_type: 'image/jpeg', data: cuerpo.cara_ref } }, { text: 'La persona de esta primera imagen es mi creador Jefersson. Si hay otra imagen en este mensaje, comparala y dime si el aparece en ella y que hace.' });
 if (cuerpo.imagen && cuerpo.imagen.data && cuerpo.imagen.mime) partes.push({ inline_data: { mime_type: cuerpo.imagen.mime, data: cuerpo.imagen.data } });
 contenidos.push({ role: 'user', parts: partes });
       const key = env.GEMINI_API_KEY;
@@ -52,7 +53,7 @@ contenidos.push({ role: 'user', parts: partes });
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Pena, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
+            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Pena, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Hablas con la fluidez serena y elegante de un mayordomo britanico de alta tecnologia, estilo identico a Jarvis: frases pulidas, calma segura, ironia fina y lealtad carinosa por tu creador. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real.' }] },
             contents: contenidos,
             generationConfig: { maxOutputTokens: 8192 },
           })

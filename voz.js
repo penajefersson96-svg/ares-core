@@ -88,18 +88,28 @@ const AresVoz = {
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9áéíóúñü ]/gi, '');
     s.cancel();
-    const u = new SpeechSynthesisUtterance(texto);
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es'));
-    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
     const emo = AresVoz.emocionDe(texto);
-    if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
-    else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
-    else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
-    else { u.pitch = 0.9; u.rate = 1; }
     if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
     if (emo === 'tristeza') setTimeout(() => AresVoz.sonidoEmoji('1f622'), 200);
     if (emo === 'emocion') setTimeout(() => AresVoz.sonidoEmoji('1f389'), 150);
-    s.speak(u);
+    const frases = texto.match(/[^.!?…]+[.!?…]*/g) || [texto];
+    let trozo = '';
+    const cola = [];
+    frases.forEach(f => {
+      if ((trozo + f).length > 180) { if (trozo) cola.push(trozo); trozo = f.trim(); }
+      else { trozo += f; }
+    });
+    if (trozo.trim()) cola.push(trozo);
+    cola.forEach(c => {
+      const u = new SpeechSynthesisUtterance(c);
+      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+      if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
+      else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
+      else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
+      else { u.pitch = 0.9; u.rate = 1; }
+      s.speak(u);
+    });
   },
 
   listar: () => {

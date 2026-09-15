@@ -36,6 +36,19 @@ const AresCerebro = {
     AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
     input.value = '';
     input.blur();
+    const tLow = texto.toLowerCase().trim();
+    if (/^(me voy|hasta luego|me desconecto|buenas noches)/.test(tLow)) {
+      localStorage.setItem('ares_visto', String(Date.now()));
+      AresCerebro.mostrar('ARES', 'Ve con Dios, socio. Yo dejo el reactor en marcha lenta y las estrellas encendidas hasta que vuelvas.');
+      return;
+    }
+    if (/^(llegue|ya llegue|ya volvi|regrese)/.test(tLow)) {
+      const t0 = Number(localStorage.getItem('ares_visto') || 0);
+      localStorage.removeItem('ares_visto');
+      const mins = t0 ? Math.round((Date.now() - t0) / 60000) : 0;
+      AresCerebro.mostrar('ARES', mins > 0 ? 'De vuelta al puente, socio: fueron ' + mins + ' min fuera. Todo quedo como lo dejaste.' : 'De vuelta al puente, socio. Todo quedo como lo dejaste.');
+      return;
+    }
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
     if (mEspejo) {
       try {
@@ -129,6 +142,19 @@ AresCerebro.img = null;
       AresCerebro.pensarLocal(texto);
     }
   },
+  initPresencia: () => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) { localStorage.setItem('ares_visto', String(Date.now())); }
+      else {
+        const t0 = Number(localStorage.getItem('ares_visto') || 0);
+        localStorage.removeItem('ares_visto');
+        if (t0) {
+          const mins = Math.round((Date.now() - t0) / 60000);
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, socio: estuviste fuera ' + mins + ' min. El reactor quedo en marcha lenta esperandote.');
+        }
+      }
+    });
+  },
   init: () => {
     const listo = (mime, data) => { AresCerebro.img = { mime: mime, data: data }; AresCerebro.mostrar('ARES', 'Archivo listo: se ira con tu proximo mensaje.'); };
     const leer = (f, comprimir) => {
@@ -174,6 +200,7 @@ const inVideo = mkIn('video/*', 'environment');
     const btnOk = document.getElementById('enviar');
     if (btnOk && btnOk.parentNode) btnOk.parentNode.insertBefore(cam, btnOk);
     const input = document.getElementById('entrada');
+    AresCerebro.initPresencia(); 
     const btn = document.getElementById('enviar');
     if (btn && input) {
       btn.onclick = AresCerebro.enviar;

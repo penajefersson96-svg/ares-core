@@ -72,8 +72,12 @@ const AresCerebro = {
       return;
     }
     try {
+      const ahora = new Date();
+        const diaCero = new Date('2026-09-02T00:00:00');
+        const diaProy = Math.floor((ahora - diaCero) / 86400000) + 1;
+        const contexto = 'Contexto de tiempo: hoy es ' + ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ', son las ' + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ', y es el Dia de Proyecto numero ' + diaProy + ' desde que Jefersson te creo en una cama de hospital.';
       const hilo = hist.map(h => h.q + ': ' + h.t).join('\n');
-        const promptCompleto = (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;
+        const promptCompleto = contexto + '\n' + (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

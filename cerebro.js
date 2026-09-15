@@ -33,6 +33,9 @@ const AresCerebro = {
     const hist = AresCerebro.leerHist().slice(-10);
     let hechos = '';
     try { if (window.AresMemoria) hechos = JSON.stringify(AresMemoria.hechos || AresMemoria.datos || AresMemoria.memoria || {}); } catch (e) {}
+    try { const bvH = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvH && bvH.desc) hechos = (hechos && hechos !== '{}' ? hechos + ' ' : '') + 'Rostro de mi creador: ' + bvH.desc; } catch (e) {}
+    let caraRef = null;
+    try { const bvR = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvR && bvR.cara && AresCerebro.img) caraRef = bvR.cara; } catch (e) {}
     AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
     input.value = '';
     input.blur();
@@ -47,6 +50,87 @@ const AresCerebro = {
       localStorage.removeItem('ares_visto');
       const mins = t0 ? Math.round((Date.now() - t0) / 60000) : 0;
       AresCerebro.mostrar('ARES', mins > 0 ? 'De vuelta al puente, socio: fueron ' + mins + ' min fuera. Todo quedo como lo dejaste.' : 'De vuelta al puente, socio. Todo quedo como lo dejaste.');
+      return;
+    }
+    const bovedaLeer = () => { try { return JSON.parse(localStorage.getItem('ares_boveda') || 'null'); } catch (e) { return null; } };
+    const miniatura = (data, cb) => {
+      const im = new Image();
+      im.onload = () => {
+        const cv = document.createElement('canvas');
+        cv.width = 160; cv.height = Math.round(160 * im.height / im.width);
+        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
+        cb(cv.toDataURL('image/jpeg', 0.6).split(',')[1]);
+      };
+      im.src = 'data:image/jpeg;base64,' + data;
+    };
+    const huellaCrear = async () => {
+      try {
+        const cred = await navigator.credentials.create({ publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          rp: { name: 'ARES Boveda' },
+          user: { id: crypto.getRandomValues(new Uint8Array(16)), name: 'jefersson', displayName: 'Jefersson' },
+          pubKeyCredParams: [{ type: 'public-key', alg: -7 }, { type: 'public-key', alg: -257 }],
+          authenticatorSelection: { authenticatorAttachment: 'platform', userVerification: 'required' },
+          timeout: 60000
+        } });
+        localStorage.setItem('ares_boveda_cred', btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(cred.rawId)))));
+        return true;
+      } catch (e) { return false; }
+    };
+    const huellaVer = async () => {
+      const id = localStorage.getItem('ares_boveda_cred');
+      if (!id) return true;
+      try {
+        const raw = Uint8Array.from(atob(id), c => c.charCodeAt(0));
+        const assert = await navigator.credentials.get({ publicKey: {
+          challenge: crypto.getRandomValues(new Uint8Array(32)),
+          allowCredentials: [{ type: 'public-key', id: raw }],
+          userVerification: 'required', timeout: 60000
+        } });
+        return !!assert;
+      } catch (e) { return false; }
+    };
+    const tB = texto.toLowerCase().trim();
+    if (tB === 'recuerda mi cara') {
+      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Primero adjunta tu foto con la camara, socio: luego dime recuerda mi cara.'); return; }
+      miniatura(AresCerebro.img.data, async (mini) => {
+        const ok = await huellaCrear();
+        localStorage.setItem('ares_boveda', JSON.stringify({ cara: mini, desc: '', sello: new Date().toLocaleString() }));
+        AresCerebro.mostrar('ARES', ok ? 'Tu rostro quedo sellado en mi boveda bajo tu huella, socio. Ahora escribire como te veo.' : 'Tu rostro quedo sellado (sin huella: tu navegador no dio permiso de biometria).');
+        try {
+          const res3 = await fetch('https://ares.penajefersson96.workers.dev', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Describe el rostro de mi creador en esta imagen con detalle permanente y carinoso: rasgos, expresion habitual, edad aparente. Un parrafo corto, sin inventar.', imagen: { mime: 'image/jpeg', data: mini } })
+          });
+          const d6 = await res3.json();
+          const bv = bovedaLeer() || {};
+          bv.desc = (d6.respuesta || '').slice(0, 400);
+          localStorage.setItem('ares_boveda', JSON.stringify(bv));
+          AresCerebro.mostrar('ARES', 'Asi te guardare por siempre: ' + bv.desc);
+        } catch (e) {}
+      });
+      return;
+    }
+    if (tB === 'abrir boveda') {
+      huellaVer().then(ok => {
+        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada: tu huella no la abrio.'); return; }
+        const bv = bovedaLeer();
+        if (!bv) { AresCerebro.mostrar('ARES', 'La boveda esta vacia aun, socio.'); return; }
+        const chat = document.getElementById('chat');
+        const p = document.createElement('p');
+        p.className = 'm-ares';
+        p.innerHTML = '<strong>ARES (boveda sellada):</strong><br><img src="data:image/jpeg;base64,' + bv.cara + '" style="max-width:40%;border:1px solid rgba(0,255,255,.4);border-radius:8px;"><br>' + (bv.desc || 'Sin descripcion aun.') + '<br><em>Sellado: ' + bv.sello + '</em>';
+        chat.appendChild(p);
+        chat.scrollTop = chat.scrollHeight;
+      });
+      return;
+    }
+    if (tB === 'borrar boveda confirmo') {
+      huellaVer().then(ok => {
+        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada.'); return; }
+        localStorage.removeItem('ares_boveda');
+        AresCerebro.mostrar('ARES', 'Boveda borrada con tu huella, socio. Cuando quieras, volvemos a sellarla.');
+      });
       return;
     }
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
@@ -94,7 +178,7 @@ const AresCerebro = {
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos, imagen: AresCerebro.img || null })
+        body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos, imagen: AresCerebro.img || null, cara_ref: caraRef })
 });
 AresCerebro.img = null;
       if (!res.ok) throw new Error('Sin servidor');

@@ -226,6 +226,7 @@ AresCerebro.img = null;
   if (mTag) {
     const nom = mTag[1].toLowerCase();
     const arg = (mTag[2] || '').trim();
+    if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
     if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true);
     else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true);
     else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true);
@@ -273,6 +274,7 @@ AresCerebro.img = null;
       if (mTagF) {
         const nom = mTagF[1].toLowerCase();
         const arg = (mTagF[2] || '').trim();
+        if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
         const chat2 = document.getElementById('chat');
         const ultimo = chat2 && chat2.lastElementChild;
         if (ultimo) ultimo.innerHTML = ultimo.innerHTML.replace(mTagF[0], '').replace(/\s*$/, '');
@@ -295,7 +297,7 @@ AresCerebro.img = null;
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, Senor: el reactor quedo en marcha lenta esperandote.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, Señor: el reactor quedo en marcha lenta esperandote.');
         }
       }
     });

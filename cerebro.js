@@ -28,7 +28,7 @@ const AresCerebro = {
   },
   enviar: async (forzado, silencioso) => {
     const input = document.getElementById('entrada');
-    const texto = (forzado || input.value).trim();
+    const texto = (typeof forzado === 'string' ? forzado : input.value).trim();
     if (!texto) return;
     const hist = AresCerebro.leerHist().slice(-10);
     let hechos = '';

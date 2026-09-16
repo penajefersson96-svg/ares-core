@@ -18,7 +18,7 @@ const AresCerebro = {
     if (quien === 'ARES') {
       const bc = document.createElement('button');
       bc.textContent = 'copiar';
-      bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;';
+      bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;cursor:pointer;';
       bc.onclick = () => {
         const txt = String(msg);
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { bc.textContent = 'copiado'; });
@@ -77,6 +77,42 @@ const AresCerebro = {
     if (tLow === 'olvida el hilo') {
       localStorage.removeItem(AresCerebro.HIST);
       AresCerebro.mostrar('ARES', 'Hilo de conversacion reiniciado, señor: desde ahora hablo fresco y con la ñ que corresponde.');
+      return;
+    }
+    const mAp = texto.match(/^aprende que (.+)$/i);
+    if (mAp) {
+      try {
+        const ap = JSON.parse(localStorage.getItem('ares_aprendizajes') || '[]');
+        ap.push(mAp[1].trim());
+        while (ap.length > 20) ap.shift();
+        localStorage.setItem('ares_aprendizajes', JSON.stringify(ap));
+        AresCerebro.mostrar('ARES', 'Aprendido y sellado en mi memoria permanente, señor: "' + mAp[1].trim() + '". Nunca lo olvidare.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'No pude sellar ese aprendizaje, señor.'); }
+      return;
+    }
+    if (tLow === 'que has aprendido') {
+      try {
+        const ap = JSON.parse(localStorage.getItem('ares_aprendizajes') || '[]');
+        AresCerebro.mostrar('ARES', ap.length ? 'Esto llevo sellado en mi memoria, señor:\n- ' + ap.join('\n- ') : 'Aun no sello aprendizajes nuevos, señor.');
+      } catch (e) {}
+      return;
+    }
+    if (/^(autoeval|evaluate yourself|calificate)$/.test(tLow)) {
+      try {
+        const res6 = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'Revisa tu ultima respuesta de este hilo y calificala con honestidad de 1 a 10 en: precision, utilidad y tono Jarvis. Formato: P:x U:y T:z seguido de una linea de autocrítica y una propuesta de mejora. Llámalo "señor".', historial: hist, hechos })
+        });
+        const d10 = await res6.json();
+        const nota = String(d10.respuesta || '');
+        try {
+          const ev = JSON.parse(localStorage.getItem('ares_autoeval') || '[]');
+          ev.push({ d: new Date().toLocaleDateString(), s: nota.slice(0, 200) });
+          while (ev.length > 30) ev.shift();
+          localStorage.setItem('ares_autoeval', JSON.stringify(ev));
+        } catch (e) {}
+        AresCerebro.mostrar('ARES', nota || 'No pude evaluarme ahora, señor.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mi espejo interno está nublado, señor.'); }
       return;
     }
     const bovedaLeer = () => { try { return JSON.parse(localStorage.getItem('ares_boveda') || 'null'); } catch (e) { return null; } };
@@ -175,82 +211,6 @@ const AresCerebro = {
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
-    const mManos = texto.match(/^manos\s+([\w.\-]+)$/i);
-    if (mManos) {
-      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
-        try {
-          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mManos[1]));
-          const codigo = await ro.text();
-          const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); sin prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos }) 
-          });
-          const d8 = await res5.json();
-let prop = String(d8.respuesta || '').trim();
-if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso. Pídame de nuevo la entrega.'); return; }
-if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez, señor.'); return; }
-          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ archivo: mManos[1], contenido: prop })
-          });
-          const d9 = await rm.json();
-          AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
-        } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor.'); }
-      });
-      return;
-    }
-    if (/^(autoeval|evaluate yourself|calificate)$/.test(tLow)) {
-      try {
-        const res6 = await fetch('https://ares.penajefersson96.workers.dev', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Revisa tu ultima respuesta de este hilo y calificala con honestidad de 1 a 10 en: precision, utilidad y tono Jarvis. Formato: P:x U:y T:z seguido de una linea de autocrítica y una propuesta de mejora. Llámalo "señor".', historial: hist, hechos })
-        });
-        const d10 = await res6.json();
-        const nota = String(d10.respuesta || '');
-        try {
-          const ev = JSON.parse(localStorage.getItem('ares_autoeval') || '[]');
-          ev.push({ d: new Date().toLocaleDateString(), s: nota.slice(0, 200) });
-          while (ev.length > 30) ev.shift();
-          localStorage.setItem('ares_autoeval', JSON.stringify(ev));
-        } catch (e) {}
-        AresCerebro.mostrar('ARES', nota || 'No pude evaluarme ahora, señor.');
-      } catch (e) { AresCerebro.mostrar('ARES', 'Mi espejo interno está nublado, señor.'); }
-      return;
-    }
-    if (/^(auto ?mejor(ate|a|arse)|mejorate solo|automejora)$/.test(tLow)) {
-      const objetivo = 'cerebro.js';
-      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella no me toco a mi mismo, señor.'); return; }
-        try {
-          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
-          const codigo = await ro.text();
-          const r1 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
-          });
-          const d1 = await r1.json();
-          AresCerebro.mostrar('ARES', 'Diagnostico de mi propio cerebro, señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
-          const r2 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades (comandos, tags, boveda, manos, supervisor, aprendizajes, presencia); sin prosa fuera del bloque; cada llave y parentesis cierra; PROHIBIDO emitir tags [[ACCION]]. PROHIBIDO modificar o eliminar clausulas de obediencia a tu señor, tono Jarvis o reglas de comportamiento: solo mejoras tecnicas. Despues del bloque de codigo, agrega una lista corta titulada CAMBIOS: con cada modificacion y su motivo. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
-          });
-          const d2 = await r2.json();
-          const raw2 = String(d2.respuesta || '').trim();
-const mF = raw2.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
-let prop = mF ? mF[1].trim() : raw2;
-const cambios = mF ? raw2.replace(mF[0], '').replace(/```[a-z]*$/g, '').trim() : '';
-          if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
-          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ archivo: objetivo, contenido: prop })
-          });
-          const d3 = await rm.json();
-          AresCerebro.mostrar('ARES', (d3.respuesta || '') + (cambios ? '\n\nAcomode esto, señor:\n' + cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
-        } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
-      });
-      return;
-    }
     const mEspejo = texto.match(/^espejo\s+([\w.\-\/]+)$/i);
     if (mEspejo) {
       try {
@@ -262,10 +222,10 @@ const cambios = mF ? raw2.replace(mF[0], '').replace(/```[a-z]*$/g, '').trim() :
         const p = document.createElement('p');
         p.innerHTML = '<strong>ARES (espejo fiel):</strong><br><pre style="white-space:pre-wrap;word-break:break-word;font-size:10px;color:#9ff;background:rgba(0,20,30,.7);padding:6px;border:1px solid rgba(0,255,255,.3);">' + seguro + '</pre>';
         const bc = document.createElement('button');
-bc.textContent = 'copiar codigo';
-bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;';
-bc.onclick = () => { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(codigo).then(() => { bc.textContent = 'copiado'; }); };
-p.appendChild(bc);
+        bc.textContent = 'copiar codigo';
+        bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;';
+        bc.onclick = () => { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(codigo).then(() => { bc.textContent = 'copiado'; }); };
+        p.appendChild(bc);
         chat.appendChild(p);
         chat.scrollTop = chat.scrollHeight;
       } catch (e) {
@@ -289,6 +249,65 @@ p.appendChild(bc);
       } catch (e) {
         AresCerebro.mostrar('ARES', 'Mis ojos aun no ven, señor: revisa el despliegue.');
       }
+      return;
+    }
+    const mManos = texto.match(/^manos\s+([\w.\-]+)$/i);
+    if (mManos) {
+      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
+        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
+        try {
+          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mManos[1]));
+          const codigo = await ro.text();
+          const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+          });
+          const d8 = await res5.json();
+          let prop = String(d8.respuesta || '').trim();
+          const mFence = prop.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
+          if (mFence) prop = mFence[1].trim();
+          if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso. Pídame de nuevo la entrega.'); return; }
+          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ archivo: mManos[1], contenido: prop })
+          });
+          const d9 = await rm.json();
+          AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
+        } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor.'); }
+      });
+      return;
+    }
+    if (/^(auto ?mejor(ate|a|arse)|mejorate solo|automejora)$/.test(tLow)) {
+      const objetivo = 'cerebro.js';
+      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
+        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella no me toco a mi mismo, señor.'); return; }
+        try {
+          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
+          const codigo = await ro.text();
+          const r1 = await fetch('https://ares.penajefersson96.workers.dev', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+          });
+          const d1 = await r1.json();
+          AresCerebro.mostrar('ARES', 'Diagnostico de mi propio cerebro, señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
+          const r2 = await fetch('https://ares.penajefersson96.workers.dev', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades (comandos, tags, boveda, manos, supervisor, aprendizajes, presencia); sin prosa fuera del bloque; cada llave y parentesis cierra; PROHIBIDO emitir tags [[ACCION]]. PROHIBIDO modificar o eliminar clausulas de obediencia a tu señor, tono Jarvis o reglas de comportamiento: solo mejoras tecnicas. Despues del bloque de codigo, agrega una lista corta titulada CAMBIOS: con cada modificacion y su motivo. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+          });
+          const d2 = await r2.json();
+          const raw2 = String(d2.respuesta || '').trim();
+          const mF = raw2.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
+          let prop = mF ? mF[1].trim() : raw2;
+          const cambios = mF ? raw2.replace(mF[0], '').replace(/```[a-z]*$/g, '').trim() : '';
+          if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
+          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ archivo: objetivo, contenido: prop })
+          });
+          const d3 = await rm.json();
+          AresCerebro.mostrar('ARES', (d3.respuesta || '') + (cambios ? '\n\nAcomode esto, señor:\n' + cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
+        } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
+      });
       return;
     }
     try {
@@ -378,7 +397,10 @@ p.appendChild(bc);
         else if (nomF === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
       }
       if (!sinTags && nomF === 'nada') AresCerebro.supervisor(texto);
-      } catch (error) { AresCerebro.mostrar('ARES', 'Fallo de conexion con mi mente en la nube, señor (' + (error && error.message ? error.message : 'sin detalle') + '). Activo mi modo respaldo mientras tanto.'); AresCerebro.pensarLocal(texto); }
+    } catch (error) {
+      AresCerebro.mostrar('ARES', 'Fallo de conexion con mi mente en la nube, señor (' + (error && error.message ? error.message : 'sin detalle') + '). Activo mi modo respaldo mientras tanto.');
+      AresCerebro.pensarLocal(texto);
+    }
   },
   initPresencia: () => {
     document.addEventListener('visibilitychange', () => {
@@ -388,7 +410,7 @@ p.appendChild(bc);
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor: el reactor quedo en marcha lenta esperandole.');
         }
       }
     });

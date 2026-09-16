@@ -1,7 +1,8 @@
-// cerebro.js v6 — Jarvis, sin bucles, con olvida el hilo
+// cerebro.js v7 — Jarvis con supervisor de promesas
 const AresCerebro = {
   HIST: 'ares_historial',
   img: null,
+  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest' },
   leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
   recordar: (quien, t) => {
     const h = AresCerebro.leerHist();
@@ -43,6 +44,10 @@ const AresCerebro = {
     else if (texto.includes('estado')) respuesta = 'Memoria estable, señor. Diagnostico activo. Esperando nucleo neuronal.';
     else if (texto.includes('futuro')) respuesta = 'Visualizo una interfaz holografica y aprendizaje autonomo, señor.';
     AresCerebro.mostrar('ARES', respuesta);
+  },
+  supervisor: (texto) => {
+    const mInt = texto.match(/\b(revisa|revisar|pulir|pulirias|pulirías|mejora|mejorar|arregla|chequea|mira)\b[\s\S]*?\b(panel|voz|cerebro|worker|orbe|memoria|oidos|sonidos|reporte|mani|diagnostico|sw|index|manifest)\b/i);
+    if (mInt) AresCerebro.enviar('leete ' + AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()], true, true);
   },
   enviar: async (forzado, silencioso, sinTags) => {
     const input = document.getElementById('entrada');
@@ -225,8 +230,9 @@ const AresCerebro = {
         const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
         if (mTag) tResp = tResp.replace(mTag[0], '').trim();
         AresCerebro.mostrar('ARES', tResp);
+        let nom = 'nada';
         if (mTag && !sinTags) {
-          let nom = mTag[1].toLowerCase();
+          nom = mTag[1].toLowerCase();
           const arg = (mTag[2] || '').trim();
           if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
           if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
@@ -236,6 +242,7 @@ const AresCerebro = {
           else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
           else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
         }
+        if (!sinTags && nom === 'nada') AresCerebro.supervisor(texto);
         return;
       }
       const chat = document.getElementById('chat');
@@ -273,20 +280,22 @@ const AresCerebro = {
       }
       if (full.trim()) AresCerebro.recordar('ARES', full);
       const mTagF = full.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
+      let nomF = 'nada';
       if (mTagF && !sinTags) {
-        let nom = mTagF[1].toLowerCase();
+        nomF = mTagF[1].toLowerCase();
         const arg = (mTagF[2] || '').trim();
-        if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
+        if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nomF = 'nada';
         const chat2 = document.getElementById('chat');
         const ultimo = chat2 && chat2.lastElementChild;
         if (ultimo) ultimo.innerHTML = ultimo.innerHTML.replace(mTagF[0], '').replace(/\s*$/, '');
-        if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
-        else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
-        else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
-        else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
-        else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
-        else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
+        if (nomF === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
+        else if (nomF === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
+        else if (nomF === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
+        else if (nomF === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
+        else if (nomF === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
+        else if (nomF === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
       }
+      if (!sinTags && nomF === 'nada') AresCerebro.supervisor(texto);
     } catch (error) {
       AresCerebro.pensarLocal(texto);
     }
@@ -358,4 +367,4 @@ const AresCerebro = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V6
+// FIN CEREBRO V7

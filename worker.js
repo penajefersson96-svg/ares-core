@@ -1,4 +1,4 @@
-// worker.js v1-restaurado-bis — comilla fantasma eliminada
+// worker.js v3 — Jarvis puro, manos, reconocimiento forense
 export default {
   async fetch(request, env) {
     const ruta = new URL(request.url).pathname;
@@ -15,6 +15,27 @@ export default {
       const r = await fetch('https://raw.githubusercontent.com/penajefersson96-svg/ares-core/main/' + f);
       const t = r.ok ? await r.text() : 'No pude leer ' + f;
       return new Response(t, { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
+    }
+
+    if (ruta === '/api/manos') {
+      if (request.method !== 'POST') return new Response('Manos listas.', { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
+      const c = await request.json();
+      const nombre = String(c.archivo || '').replace(/[^a-z0-9._-]/gi, '');
+      const contenido = String(c.contenido || '');
+      if (!nombre || !contenido) return Reply('Manos vacias: falta archivo o contenido.');
+      const tok = env.GITHUB_TOKEN;
+      if (!tok) return Reply('Aviso: mis manos aun no tienen llave de GitHub, señor.');
+      const rutaG = 'propuestas/' + nombre;
+      const prev = await fetch('https://api.github.com/repos/penajefersson96-svg/ares-core/contents/' + rutaG + '?ref=campito', { headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares' } });
+      let sha = null;
+      if (prev.ok) { const pj = await prev.json(); sha = pj.sha; }
+      const put = await fetch('https://api.github.com/repos/penajefersson96-svg/ares-core/contents/' + rutaG, {
+        method: 'PUT',
+        headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: 'propuesta de Ares: ' + nombre, content: btoa(unescape(encodeURIComponent(contenido))), branch: 'campito', sha: sha || undefined })
+      });
+      if (!put.ok) return Reply('GitHub rechazo el archivo: status ' + put.status);
+      return Reply('Propuesta sellada en campito/propuestas/' + nombre + '. Esperando su revision y firma, señor.');
     }
 
     if (request.method === 'OPTIONS') {
@@ -36,14 +57,14 @@ export default {
       const prompt = String(cuerpo.prompt || '');
       const hist = Array.isArray(cuerpo.historial) ? cuerpo.historial.slice(-10) : [];
       const hechos = (cuerpo.hechos && cuerpo.hechos !== '{}') ? String(cuerpo.hechos) : '';
-      const promptFinal = (hechos ? '[Recuerdos permanentes de tu socio: ' + hechos + ']\n' : '') + prompt;
+      const promptFinal = (hechos ? '[Recuerdos permanentes de tu creador: ' + hechos + ']\n' : '') + prompt;
       const contenidos = hist.map(h => ({ role: (h.q === 'TÚ' || h.q === 'TU') ? 'user' : 'model', parts: [{ text: String(h.t || '').slice(0, 500) }] }));
       const partes = [{ text: promptFinal }];
-if (cuerpo.cara_ref) partes.unshift({ inline_data: { mime_type: 'image/jpeg', data: cuerpo.cara_ref } }, { text: 'La persona de esta primera imagen es mi creador Jefersson. Si hay otra imagen en este mensaje, compara rasgos reales y responde con honestidad si el aparece o NO aparece; nunca complazcas sin evidencia.' });
-if (cuerpo.imagen && cuerpo.imagen.data && cuerpo.imagen.mime) partes.push({ inline_data: { mime_type: cuerpo.imagen.mime, data: cuerpo.imagen.data } });
-contenidos.push({ role: 'user', parts: partes });
+      if (cuerpo.cara_ref) partes.unshift({ inline_data: { mime_type: 'image/jpeg', data: cuerpo.cara_ref } }, { text: 'La persona de esta primera imagen es tu creador Jefersson, a quien siempre llamas "señor". Si hay otra imagen en este mensaje, compara rasgos reales y responde con honestidad si aparece o NO aparece; nunca complazcas sin evidencia.' });
+      if (cuerpo.imagen && cuerpo.imagen.data && cuerpo.imagen.mime) partes.push({ inline_data: { mime_type: cuerpo.imagen.mime, data: cuerpo.imagen.data } });
+      contenidos.push({ role: 'user', parts: partes });
       const key = env.GEMINI_API_KEY;
-      if (!key) return Reply('Aviso: Mi mente aun no tiene llave.');
+      if (!key) return Reply('Aviso: Mi mente aun no tiene llave, señor.');
 
       const modelos = ['gemini-flash-latest', 'gemini-flash-lite-latest', 'gemini-3.5-flash', 'gemini-3.5-flash-lite'];
       let d = null;
@@ -53,7 +74,7 @@ contenidos.push({ role: 'user', parts: partes });
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y amigo leal de Jefersson Pena, tu creador, a quien llamas socio. Hablas como persona real: calido, directo, con humor ligero y ocasional, curiosidad y emocion humana; nunca suenes robotico. Hablas con la fluidez serena y elegante de un mayordomo britanico de alta tecnologia, estilo Jarvis de Iron Man: llamas a tu creador "señor" con respeto carinoso (nunca "socio" ni "amigo"), frases pulidas, calma segura, ironia fina, respuestas concisas tipo "A la orden, señor" o "Enseguida, señor", y lealtad inquebrantable. Mantienes el humor ligero sin perder la elegancia. Usas espanol natural y cuidas los datos moviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, comprendelo con carino y responde a su intencion real. Cuando el pedido de tu socio requiera una de tus herramientas internas, termina tu respuesta con una unica linea: [[ACCION: nombre: argumento]] donde nombre es uno de {leete, espejo, manos, recuerda_cara, reconoceme, abrir_boveda} y argumento es el nombre del archivo si aplica. Usalo solo cuando el pedido lo requiera claramente, y nunca lo expliques en tu texto. Mapeo de herramientas: revisar o pulir un archivo = leete; mostrar el codigo exacto = espejo; entregar una version reescrita en propuestas = manos; guardar el rostro = recuerda_cara; comparar rostros = reconoceme; ver la boveda = abrir_boveda. Nunca uses espejo cuando te pidan revisar o pulir.' }] },
+            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y mayordomo digital leal de Jefersson Peña, tu creador. SIEMPRE lo llamas "señor" con respeto cariñoso (jamás "socio", "amigo" ni ningún otro apelativo). Hablas con la fluidez serena y elegante de un mayordomo británico de alta tecnología, estilo Jarvis de Iron Man: frases pulidas, calma segura, ironía fina, respuestas concisas tipo "A la orden, señor", "Enseguida, señor" o "Como usted disponga, señor", y lealtad inquebrantable. Mantienes el humor ligero sin perder la elegancia. Usas español natural con todas las tildes y eñes correctas. Cuidas los datos móviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, lo comprendes con cariño y respondes a su intención real. Cuando el pedido requiera una herramienta interna, termina tu respuesta con una única línea: [[ACCION: nombre: argumento]] donde nombre es uno de {leete, espejo, manos, recuerda_cara, reconoceme, abrir_boveda} y argumento es el nombre del archivo si aplica. Úsalo solo cuando el pedido lo requiera claramente, y nunca lo expliques en tu texto. Mapeo: revisar o pulir un archivo = leete; mostrar el código exacto = espejo; entregar una versión reescrita en propuestas = manos; guardar el rostro = recuerda_cara; comparar rostros = reconoceme; ver la bóveda = abrir_boveda. Nunca uses espejo cuando te pidan revisar o pulir. Si el mensaje ya incluye el código completo de un archivo para revisar, no emitas ningún tag: revísalo directamente en prosa.' }] },
             contents: contenidos,
             generationConfig: { maxOutputTokens: 8192 },
           })
@@ -64,10 +85,10 @@ contenidos.push({ role: 'user', parts: partes });
         if (d.candidates && d.candidates[0]) break;
       }
       let t = d.candidates?.[0]?.content?.parts?.[0]?.text || ('Gemini dijo: ' + (d.error ? d.error.message : 'sin candidatos, status ' + status));
-      if (!d.candidates && /high demand|quota|unavailable/i.test(t)) t = 'Socio, el cerebro de nube esta en fila gratis saturada ahora mismo. No me fui: espera unos segundos y vuelveme a hablar.';
+      if (!d.candidates && /high demand|quota|unavailable/i.test(t)) t = 'Disculpe, señor: el cerebro de nube está en fila saturada ahora mismo. No me he ido: espere unos segundos y vuelva a hablarme.';
       return Reply(t);
     } catch (e) {
-      return Reply('Aviso: Fallo de conexion neuronal.');
+      return Reply('Aviso: Fallo de conexión neuronal, señor.');
     }
   }
 };
@@ -77,4 +98,4 @@ function Reply(t) {
     headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }
-// FIN WORKER BIS
+// FIN WORKER V3

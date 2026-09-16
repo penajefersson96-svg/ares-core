@@ -57,6 +57,7 @@ const AresCerebro = {
     let hechos = '';
     try { if (window.AresMemoria) hechos = JSON.stringify(AresMemoria.hechos || AresMemoria.datos || AresMemoria.memoria || {}); } catch (e) {}
     try { const bvH = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvH && bvH.desc) hechos = (hechos && hechos !== '{}' ? hechos + ' ' : '') + 'Rostro de mi creador: ' + bvH.desc; } catch (e) {}
+    try { const ap = JSON.parse(localStorage.getItem('ares_aprendizajes') || '[]'); if (ap.length) hechos = (hechos && hechos !== '{}' ? hechos + ' ' : '') + 'Aprendizajes permanentes del señor: ' + ap.join(' | '); } catch (e) {}
     let caraRef = null;
     try { const bvR = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvR && bvR.cara && AresCerebro.img) caraRef = bvR.cara; } catch (e) {}
     if (!silencioso) AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
@@ -183,12 +184,11 @@ const AresCerebro = {
           const codigo = await ro.text();
           const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos }) 
+            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); sin prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos }) 
           });
           const d8 = await res5.json();
 let prop = String(d8.respuesta || '').trim();
-const mFence = prop.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
-if (mFence) prop = mFence[1].trim();
+if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso. Pídame de nuevo la entrega.'); return; }
 if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez, señor.'); return; }
           const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },

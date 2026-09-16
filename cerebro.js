@@ -211,6 +211,7 @@ const AresCerebro = {
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
+    
     const mEspejo = texto.match(/^espejo\s+([\w.\-\/]+)$/i);
     if (mEspejo) {
       try {
@@ -342,6 +343,8 @@ const AresCerebro = {
           else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
           else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
           else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
+          else if (nom === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true); 
+          else if (nom === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true); 
         }
         if (!sinTags && nom === 'nada') AresCerebro.supervisor(texto);
         return;
@@ -410,7 +413,7 @@ const AresCerebro = {
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor: el reactor quedo en marcha lenta esperandole.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor.');
         }
       }
     });

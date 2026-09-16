@@ -39,7 +39,7 @@ export default {
       const promptFinal = (hechos ? '[Recuerdos permanentes de tu socio: ' + hechos + ']\n' : '') + prompt;
       const contenidos = hist.map(h => ({ role: (h.q === 'TÚ' || h.q === 'TU') ? 'user' : 'model', parts: [{ text: String(h.t || '').slice(0, 500) }] }));
       const partes = [{ text: promptFinal }];
-if (cuerpo.cara_ref) partes.unshift({ inline_data: { mime_type: 'image/jpeg', data: cuerpo.cara_ref } }, { text: 'La persona de esta primera imagen es mi creador Jefersson. Si hay otra imagen en este mensaje, comparala y dime si el aparece en ella y que hace.' });
+if (cuerpo.cara_ref) partes.unshift({ inline_data: { mime_type: 'image/jpeg', data: cuerpo.cara_ref } }, { text: 'La persona de esta primera imagen es mi creador Jefersson. Si hay otra imagen en este mensaje, compara rasgos reales y responde con honestidad si el aparece o NO aparece; nunca complazcas sin evidencia.' });
 if (cuerpo.imagen && cuerpo.imagen.data && cuerpo.imagen.mime) partes.push({ inline_data: { mime_type: cuerpo.imagen.mime, data: cuerpo.imagen.data } });
 contenidos.push({ role: 'user', parts: partes });
       const key = env.GEMINI_API_KEY;

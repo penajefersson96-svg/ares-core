@@ -57,9 +57,9 @@ const AresCerebro = {
       const im = new Image();
       im.onload = () => {
         const cv = document.createElement('canvas');
-        cv.width = 160; cv.height = Math.round(160 * im.height / im.width);
+        cv.width = 320; cv.height = Math.round(320 * im.height / im.width);
         cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height);
-        cb(cv.toDataURL('image/jpeg', 0.6).split(',')[1]);
+        cb(cv.toDataURL('image/jpeg', 0.7).split(',')[1]);
       };
       im.src = 'data:image/jpeg;base64,' + data;
     };
@@ -91,7 +91,7 @@ const AresCerebro = {
       } catch (e) { return false; }
     };
     const tB = texto.toLowerCase().trim();
-    if (tB === 'recuerda mi cara') {
+    if (/^(recuerda|guarda) mi (cara|rostro)/.test(tB)) {
       if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Primero adjunta tu foto con la camara, socio: luego dime recuerda mi cara.'); return; }
       miniatura(AresCerebro.img.data, async (mini) => {
         const ok = await huellaCrear();
@@ -131,6 +131,22 @@ const AresCerebro = {
         localStorage.removeItem('ares_boveda');
         AresCerebro.mostrar('ARES', 'Boveda borrada con tu huella, socio. Cuando quieras, volvemos a sellarla.');
       });
+      return;
+    }
+    if (/^(reconoceme|reconóceme|estoy en esta foto)/.test(tB)) {
+      const bv = bovedaLeer();
+      if (!bv || !bv.cara) { AresCerebro.mostrar('ARES', 'Aun no tengo tu rostro sellado, socio: adjunta tu foto y dime recuerda mi cara.'); return; }
+      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Adjunta primero la foto donde buscas tu cara, socio.'); return; }
+      const foto = AresCerebro.img;
+      AresCerebro.img = null;
+      try {
+        const res4 = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'Comparacion forense de rostros entre la IMAGEN 1 (mi creador sellado) y la IMAGEN 2 (foto nueva). Enumera tres rasgos comparables (forma de rostro, ojos, cabello, edad) y concluye con una frase clara: APARECE o NO APARECE. Prohibido complacer: si los rasgos difieren, di NO APARECE.', imagen: { mime: foto.mime, data: foto.data }, cara_ref: bv.cara })
+        });
+        const d7 = await res4.json();
+        AresCerebro.mostrar('ARES', d7.respuesta || 'No pude comparar ahora.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora.'); }
       return;
     }
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);

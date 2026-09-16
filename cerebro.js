@@ -200,10 +200,23 @@ AresCerebro.img = null;
       if (!res.ok) throw new Error('Sin servidor');
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        const d4 = await res.json();
-        AresCerebro.mostrar('ARES', d4.respuesta);
-        return;
-      }
+  const d4 = await res.json();
+  let tResp = d4.respuesta || '';
+  const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
+  if (mTag) tResp = tResp.replace(mTag[0], '').trim();
+  AresCerebro.mostrar('ARES', tResp);
+  if (mTag) {
+    const nom = mTag[1].toLowerCase();
+    const arg = (mTag[2] || '').trim();
+    if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true);
+    else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true);
+    else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true);
+    else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true);
+    else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true);
+    else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true);
+  }
+  return;
+}
       const chat = document.getElementById('chat');
       const p = document.createElement('p');
       p.innerHTML = '<strong>ARES:</strong> ';
@@ -239,6 +252,20 @@ AresCerebro.img = null;
       }
       if (full.trim()) AresCerebro.recordar('ARES', full);
     } catch (error) {
+      const mTagF = full.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
+      if (mTagF) {
+        const nom = mTagF[1].toLowerCase();
+        const arg = (mTagF[2] || '').trim();
+        const chat2 = document.getElementById('chat');
+        const ultimo = chat2 && chat2.lastElementChild;
+        if (ultimo) ultimo.innerHTML = ultimo.innerHTML.replace(mTagF[0], '').replace(/\s*$/, '');
+        if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true);
+        else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true);
+        else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true);
+        else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true);
+        else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true);
+        else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true);
+      }
       AresCerebro.pensarLocal(texto);
     }
   },

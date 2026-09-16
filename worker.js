@@ -19,7 +19,8 @@ export default {
 
     if (ruta === '/api/manos') {
       const R2 = (t) => new Response(JSON.stringify({ respuesta: t }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
-      if (request.method !== 'POST') return R2('Manos listas.');
+if (request.method === 'OPTIONS') return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });
+if (request.method !== 'POST') return R2('Manos listas.');
       const c = await request.json();
       const nombre = String(c.archivo || '').replace(/[^a-z0-9._-]/gi, '');
       const contenido = String(c.contenido || '');

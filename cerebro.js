@@ -345,9 +345,7 @@ p.appendChild(bc);
         else if (nomF === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
       }
       if (!sinTags && nomF === 'nada') AresCerebro.supervisor(texto);
-    } catch (error) {
-      AresCerebro.pensarLocal(texto);
-    }
+      } catch (error) { AresCerebro.mostrar('ARES', 'Fallo de conexion con mi mente en la nube, señor (' + (error && error.message ? error.message : 'sin detalle') + '). Activo mi modo respaldo mientras tanto.'); AresCerebro.pensarLocal(texto); }
   },
   initPresencia: () => {
     document.addEventListener('visibilitychange', () => {

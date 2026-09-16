@@ -14,6 +14,24 @@ const AresCerebro = {
     const p = document.createElement('p');
     p.innerHTML = '<strong>' + quien + ':</strong> ' + String(msg).replace(/\n/g, '<br>');
     p.style.color = quien === 'ARES' ? '#fff' : '#888';
+    if (quien === 'ARES') {
+      const bc = document.createElement('button');
+      bc.textContent = 'copiar';
+      bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;';
+      bc.onclick = () => {
+        const txt = String(msg);
+        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(() => { bc.textContent = 'copiado'; });
+        else {
+          const ta = document.createElement('textarea');
+          ta.value = txt;
+          document.body.appendChild(ta);
+          ta.select();
+          try { document.execCommand('copy'); bc.textContent = 'copiado'; } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      };
+      p.appendChild(bc);
+    }
     chat.appendChild(p);
     chat.scrollTop = chat.scrollHeight;
     if (quien === 'TÚ' || quien === 'ARES') AresCerebro.recordar(quien, msg);
@@ -49,7 +67,7 @@ const AresCerebro = {
       const t0 = Number(localStorage.getItem('ares_visto') || 0);
       localStorage.removeItem('ares_visto');
       const mins = t0 ? Math.round((Date.now() - t0) / 60000) : 0;
-      AresCerebro.mostrar('ARES', mins > 0 ? 'De vuelta al puente, socio: fueron ' + mins + ' min fuera. Todo quedo como lo dejaste.' : 'De vuelta al puente, socio. Todo quedo como lo dejaste.');
+      AresCerebro.mostrar('ARES', 'De vuelta al puente, socio. Todo quedo como lo dejaste.');
       return;
     }
     const bovedaLeer = () => { try { return JSON.parse(localStorage.getItem('ares_boveda') || 'null'); } catch (e) { return null; } };
@@ -277,7 +295,7 @@ AresCerebro.img = null;
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, socio: estuviste fuera ' + mins + ' min. El reactor quedo en marcha lenta esperandote.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, Senor: el reactor quedo en marcha lenta esperandote.');
         }
       }
     });

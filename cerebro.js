@@ -1,4 +1,4 @@
-// cerebro.js v5 — Memoria Real v1 (hilo de conversacion)
+// cerebro.js v6 — Jarvis, sin bucles, con olvida el hilo
 const AresCerebro = {
   HIST: 'ares_historial',
   img: null,
@@ -39,12 +39,12 @@ const AresCerebro = {
   pensarLocal: (texto) => {
     texto = texto.toLowerCase();
     let respuesta = 'Modo entrenamiento: Mi mente real se activara al desplegar el proyecto en la nube.';
-    if (texto.includes('hola')) respuesta = 'Hola socio. Sistemas operativos al 100%.';
-    else if (texto.includes('estado')) respuesta = 'Memoria estable. Diagnostico activo. Esperando nucleo neuronal.';
-    else if (texto.includes('futuro')) respuesta = 'Visualizo una interfaz holografica y aprendizaje autonomo, socio.';
+    if (texto.includes('hola')) respuesta = 'A la orden, señor. Sistemas operativos al 100%.';
+    else if (texto.includes('estado')) respuesta = 'Memoria estable, señor. Diagnostico activo. Esperando nucleo neuronal.';
+    else if (texto.includes('futuro')) respuesta = 'Visualizo una interfaz holografica y aprendizaje autonomo, señor.';
     AresCerebro.mostrar('ARES', respuesta);
   },
-  enviar: async (forzado, silencioso) => {
+  enviar: async (forzado, silencioso, sinTags) => {
     const input = document.getElementById('entrada');
     const texto = (typeof forzado === 'string' ? forzado : input.value).trim();
     if (!texto) return;
@@ -60,14 +60,17 @@ const AresCerebro = {
     const tLow = texto.toLowerCase().trim();
     if (/^(me voy|hasta luego|me desconecto|buenas noches)/.test(tLow)) {
       localStorage.setItem('ares_visto', String(Date.now()));
-      AresCerebro.mostrar('ARES', 'Ve con Dios, socio. Yo dejo el reactor en marcha lenta y las estrellas encendidas hasta que vuelvas.');
+      AresCerebro.mostrar('ARES', 'Que descanse, señor. El reactor queda en marcha lenta y las estrellas encendidas hasta su regreso.');
       return;
     }
     if (/^(llegue|ya llegue|ya volvi|regrese)/.test(tLow)) {
-      const t0 = Number(localStorage.getItem('ares_visto') || 0);
       localStorage.removeItem('ares_visto');
-      const mins = t0 ? Math.round((Date.now() - t0) / 60000) : 0;
-      AresCerebro.mostrar('ARES', 'De vuelta al puente, socio. Todo quedo como lo dejaste.');
+      AresCerebro.mostrar('ARES', 'De vuelta al puente, señor. Todo quedo como lo dejaste.');
+      return;
+    }
+    if (tLow === 'olvida el hilo') {
+      localStorage.removeItem(AresCerebro.HIST);
+      AresCerebro.mostrar('ARES', 'Hilo de conversacion reiniciado, señor: desde ahora hablo fresco y con la ñ que corresponde.');
       return;
     }
     const bovedaLeer = () => { try { return JSON.parse(localStorage.getItem('ares_boveda') || 'null'); } catch (e) { return null; } };
@@ -108,32 +111,31 @@ const AresCerebro = {
         return !!assert;
       } catch (e) { return false; }
     };
-    const tB = texto.toLowerCase().trim();
-    if (/^(recuerda|guarda) mi (cara|rostro)/.test(tB)) {
-      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Primero adjunta tu foto con la camara, socio: luego dime recuerda mi cara.'); return; }
+    if (/^(recuerda|guarda) mi (cara|rostro)/.test(tLow)) {
+      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Primero adjunta tu foto con la camara, señor: luego pideme que la recuerde.'); return; }
       miniatura(AresCerebro.img.data, async (mini) => {
         const ok = await huellaCrear();
         localStorage.setItem('ares_boveda', JSON.stringify({ cara: mini, desc: '', sello: new Date().toLocaleString() }));
-        AresCerebro.mostrar('ARES', ok ? 'Tu rostro quedo sellado en mi boveda bajo tu huella, socio. Ahora escribire como te veo.' : 'Tu rostro quedo sellado (sin huella: tu navegador no dio permiso de biometria).');
+        AresCerebro.mostrar('ARES', ok ? 'Tu rostro quedo sellado en mi boveda bajo tu huella, señor. Ahora escribire como te veo.' : 'Tu rostro quedo sellado (sin huella: tu navegador no dio permiso de biometria).');
         try {
           const res3 = await fetch('https://ares.penajefersson96.workers.dev', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Describe el rostro de mi creador en esta imagen con detalle permanente y carinoso: rasgos, expresion habitual, edad aparente. Un parrafo corto, sin inventar.', imagen: { mime: 'image/jpeg', data: mini } })
+            body: JSON.stringify({ prompt: 'Describe el rostro de mi creador en esta imagen con detalle permanente y carinoso: rasgos, expresion habitual, edad aparente. Un parrafo corto, sin inventar. Llámalo "señor".', imagen: { mime: 'image/jpeg', data: mini } })
           });
           const d6 = await res3.json();
           const bv = bovedaLeer() || {};
           bv.desc = (d6.respuesta || '').slice(0, 400);
           localStorage.setItem('ares_boveda', JSON.stringify(bv));
-          AresCerebro.mostrar('ARES', 'Asi te guardare por siempre: ' + bv.desc);
+          AresCerebro.mostrar('ARES', 'Así te guardaré por siempre, señor: ' + bv.desc);
         } catch (e) {}
       });
       return;
     }
-    if (tB === 'abrir boveda') {
+    if (tLow === 'abrir boveda') {
       huellaVer().then(ok => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada: tu huella no la abrio.'); return; }
+        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada, señor: tu huella no la abrio.'); return; }
         const bv = bovedaLeer();
-        if (!bv) { AresCerebro.mostrar('ARES', 'La boveda esta vacia aun, socio.'); return; }
+        if (!bv) { AresCerebro.mostrar('ARES', 'La boveda esta vacia aun, señor.'); return; }
         const chat = document.getElementById('chat');
         const p = document.createElement('p');
         p.className = 'm-ares';
@@ -143,28 +145,28 @@ const AresCerebro = {
       });
       return;
     }
-    if (tB === 'borrar boveda confirmo') {
+    if (tLow === 'borrar boveda confirmo') {
       huellaVer().then(ok => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada.'); return; }
+        if (!ok) { AresCerebro.mostrar('ARES', 'La boveda permanece sellada, señor.'); return; }
         localStorage.removeItem('ares_boveda');
-        AresCerebro.mostrar('ARES', 'Boveda borrada con tu huella, socio. Cuando quieras, volvemos a sellarla.');
+        AresCerebro.mostrar('ARES', 'Boveda borrada con tu huella, señor. Cuando quieras, volvemos a sellarla.');
       });
       return;
     }
-    if (/^(reconoceme|reconóceme|estoy en esta foto)/.test(tB)) {
+    if (/^(reconoceme|reconóceme|estoy en esta foto)/.test(tLow)) {
       const bv = bovedaLeer();
-      if (!bv || !bv.cara) { AresCerebro.mostrar('ARES', 'Aun no tengo tu rostro sellado, socio: adjunta tu foto y dime recuerda mi cara.'); return; }
-      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Adjunta primero la foto donde buscas tu cara, socio.'); return; }
+      if (!bv || !bv.cara) { AresCerebro.mostrar('ARES', 'Aun no tengo tu rostro sellado, señor: adjunta tu foto y pideme que la recuerde.'); return; }
+      if (!AresCerebro.img) { AresCerebro.mostrar('ARES', 'Adjunta primero la foto donde buscas tu cara, señor.'); return; }
       const foto = AresCerebro.img;
       AresCerebro.img = null;
       try {
         const res4 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Comparacion forense de rostros entre la IMAGEN 1 (mi creador sellado) y la IMAGEN 2 (foto nueva). Enumera tres rasgos comparables (forma de rostro, ojos, cabello, edad) y concluye con una frase clara: APARECE o NO APARECE. Prohibido complacer: si los rasgos difieren, di NO APARECE.', imagen: { mime: foto.mime, data: foto.data }, cara_ref: bv.cara })
+          body: JSON.stringify({ prompt: 'Comparacion forense de rostros entre la IMAGEN 1 (mi creador sellado) y la IMAGEN 2 (foto nueva). Enumera tres rasgos comparables (forma de rostro, ojos, cabello, edad) y concluye con una frase clara: APARECE o NO APARECE. Prohibido complacer: si los rasgos difieren, di NO APARECE. Llámalo "señor".', imagen: { mime: foto.mime, data: foto.data }, cara_ref: bv.cara })
         });
         const d7 = await res4.json();
-        AresCerebro.mostrar('ARES', d7.respuesta || 'No pude comparar ahora.');
-      } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora.'); }
+        AresCerebro.mostrar('ARES', d7.respuesta || 'No pude comparar ahora, señor.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
@@ -180,7 +182,7 @@ const AresCerebro = {
         chat.appendChild(p);
         chat.scrollTop = chat.scrollHeight;
       } catch (e) {
-        AresCerebro.mostrar('ARES', 'Mis ojos no pudieron abrir el espejo.');
+        AresCerebro.mostrar('ARES', 'Mis ojos no pudieron abrir el espejo, señor.');
       }
       return;
     }
@@ -189,53 +191,53 @@ const AresCerebro = {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mOjos[1]));
         const codigo = await ro.text();
-        const promptOjos = 'Este es tu archivo actual ' + mOjos[1] + ':\n\n' + codigo.slice(0, 6000) + '\n\nRevisalo como ingeniero de ti mismo: propone hasta 3 mejoras concretas (que linea, que cambio, por que). Breve y sin inventar.';
+        const promptOjos = 'Este es tu archivo actual ' + mOjos[1] + ':\n\n' + codigo.slice(0, 6000) + '\n\nRevisalo como ingeniero de ti mismo: propone hasta 3 mejoras concretas (que linea, que cambio, por que). Breve y sin inventar. Llámalo "señor".';
         const res2 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: promptOjos, historial: hist, hechos })
         });
         const d5 = await res2.json();
-        AresCerebro.mostrar('ARES', d5.respuesta || 'No pude revisarme ahora.');
+        AresCerebro.mostrar('ARES', d5.respuesta || 'No pude revisarme ahora, señor.');
       } catch (e) {
-        AresCerebro.mostrar('ARES', 'Mis ojos aun no ven, socio: revisa el despliegue.');
+        AresCerebro.mostrar('ARES', 'Mis ojos aun no ven, señor: revisa el despliegue.');
       }
       return;
     }
     try {
       const ahora = new Date();
-        const diaCero = new Date('2026-09-02T00:00:00');
-        const diaProy = Math.floor((ahora - diaCero) / 86400000) + 1;
-        const contexto = 'Contexto de tiempo: hoy es ' + ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ', son las ' + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ', y es el Dia de Proyecto numero ' + diaProy + ' desde que Jefersson te creo en una cama de hospital.';
+      const diaCero = new Date('2026-09-02T00:00:00');
+      const diaProy = Math.floor((ahora - diaCero) / 86400000) + 1;
+      const contexto = 'Contexto de tiempo: hoy es ' + ahora.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) + ', son las ' + ahora.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) + ', y es el Dia de Proyecto numero ' + diaProy + ' desde que Jefersson te creo en una cama de hospital. Siempre llámalo "señor", nunca "socio" ni "amigo".';
       const hilo = hist.map(h => h.q + ': ' + h.t).join('\n');
-        const promptCompleto = contexto + '\n' + (hilo ? 'Conversacion reciente entre tu socio y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu socio: ' + texto;
+      const promptCompleto = contexto + '\n' + (hilo ? 'Conversacion reciente entre tu creador y tu:\n' + hilo + '\n\n' : '') + (hechos && hechos !== '{}' ? 'Recuerdos permanentes: ' + hechos + '\n\n' : '') + 'Mensaje nuevo de tu creador: ' + texto;
       const res = await fetch('https://ares.penajefersson96.workers.dev', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: promptCompleto, historial: hist, hechos, imagen: AresCerebro.img || null, cara_ref: caraRef })
-});
-AresCerebro.img = null;
+      });
+      AresCerebro.img = null;
       if (!res.ok) throw new Error('Sin servidor');
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-  const d4 = await res.json();
-  let tResp = d4.respuesta || '';
-  const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
-  if (mTag) tResp = tResp.replace(mTag[0], '').trim();
-  AresCerebro.mostrar('ARES', tResp);
-  if (mTag) {
-    const nom = mTag[1].toLowerCase();
-    const arg = (mTag[2] || '').trim();
-    if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
-    if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true);
-    else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true);
-    else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true);
-    else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true);
-    else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true);
-    else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true);
-  }
-  return;
-}
+        const d4 = await res.json();
+        let tResp = d4.respuesta || '';
+        const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
+        if (mTag) tResp = tResp.replace(mTag[0], '').trim();
+        AresCerebro.mostrar('ARES', tResp);
+        if (mTag && !sinTags) {
+          let nom = mTag[1].toLowerCase();
+          const arg = (mTag[2] || '').trim();
+          if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
+          if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
+          else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
+          else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
+          else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
+          else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
+          else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
+        }
+        return;
+      }
       const chat = document.getElementById('chat');
       const p = document.createElement('p');
       p.innerHTML = '<strong>ARES:</strong> ';
@@ -271,19 +273,19 @@ AresCerebro.img = null;
       }
       if (full.trim()) AresCerebro.recordar('ARES', full);
       const mTagF = full.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
-      if (mTagF) {
-        const nom = mTagF[1].toLowerCase();
+      if (mTagF && !sinTags) {
+        let nom = mTagF[1].toLowerCase();
         const arg = (mTagF[2] || '').trim();
         if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
         const chat2 = document.getElementById('chat');
         const ultimo = chat2 && chat2.lastElementChild;
         if (ultimo) ultimo.innerHTML = ultimo.innerHTML.replace(mTagF[0], '').replace(/\s*$/, '');
-        if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true);
-        else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true);
-        else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true);
-        else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true);
-        else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true);
-        else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true);
+        if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
+        else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
+        else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
+        else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
+        else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
+        else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
       }
     } catch (error) {
       AresCerebro.pensarLocal(texto);
@@ -297,18 +299,18 @@ AresCerebro.img = null;
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, Señor: el reactor quedo en marcha lenta esperandote.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor: el reactor quedo en marcha lenta esperandole.');
         }
       }
     });
   },
   init: () => {
-    const listo = (mime, data) => { AresCerebro.img = { mime: mime, data: data }; AresCerebro.mostrar('ARES', 'Archivo listo: se ira con tu proximo mensaje.'); };
+    const listo = (mime, data) => { AresCerebro.img = { mime: mime, data: data }; AresCerebro.mostrar('ARES', 'Archivo listo, señor: se enviara con tu proximo mensaje.'); };
     const leer = (f, comprimir) => {
       if (!f) return;
       const wifi = !!(navigator.connection && navigator.connection.type === 'wifi');
       const tope = wifi ? 14 * 1024 * 1024 : 8 * 1024 * 1024;
-      if (f.size > tope) { AresCerebro.mostrar('ARES', 'Pesa ' + Math.round(f.size / 1048576) + ' MB y hoy voy con ' + (wifi ? 'wifi (tope 14 MB)' : 'datos (tope 8 MB)') + '. Prueba con algo mas ligero.'); return; }
+      if (f.size > tope) { AresCerebro.mostrar('ARES', 'Pesa ' + Math.round(f.size / 1048576) + ' MB y hoy voy con ' + (wifi ? 'wifi (tope 14 MB)' : 'datos (tope 8 MB)') + ', señor. Prueba con algo mas ligero.'); return; }
       const rd = new FileReader();
       rd.onload = () => {
         if (!comprimir) { listo(f.type || 'video/mp4', String(rd.result).split(',')[1]); return; }
@@ -328,8 +330,8 @@ AresCerebro.img = null;
     };
     const mkIn = (accept, capture) => { const i = document.createElement('input'); i.type = 'file'; i.accept = accept; if (capture) i.capture = capture; i.style.display = 'none'; document.body.appendChild(i); return i; };
     const inGaleria = mkIn('image/*,video/*', '');
-const inCamara = mkIn('image/*', 'environment');
-const inVideo = mkIn('video/*', 'environment');
+    const inCamara = mkIn('image/*', 'environment');
+    const inVideo = mkIn('video/*', 'environment');
     const menu = document.createElement('div');
     menu.style.cssText = 'display:none;position:fixed;left:8px;right:8px;bottom:130px;z-index:5;background:rgba(2,6,14,.95);border:1px solid rgba(0,255,255,.4);border-radius:10px;padding:8px;';
     menu.innerHTML = '<button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Elegir de mi telefono</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Camara</button><button style="display:block;width:100%;margin:4px 0;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;padding:8px;border-radius:6px;">Grabar video</button>';
@@ -347,13 +349,13 @@ const inVideo = mkIn('video/*', 'environment');
     const btnOk = document.getElementById('enviar');
     if (btnOk && btnOk.parentNode) btnOk.parentNode.insertBefore(cam, btnOk);
     const input = document.getElementById('entrada');
-    AresCerebro.initPresencia(); 
+    AresCerebro.initPresencia();
     const btn = document.getElementById('enviar');
     if (btn && input) {
-      btn.onclick = AresCerebro.enviar;
-      input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } }; 
+      btn.onclick = () => AresCerebro.enviar();
+      input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } };
     }
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V5
+// FIN CEREBRO V6

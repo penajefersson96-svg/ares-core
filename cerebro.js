@@ -210,6 +210,11 @@ if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez,
         const chat = document.getElementById('chat');
         const p = document.createElement('p');
         p.innerHTML = '<strong>ARES (espejo fiel):</strong><br><pre style="white-space:pre-wrap;word-break:break-word;font-size:10px;color:#9ff;background:rgba(0,20,30,.7);padding:6px;border:1px solid rgba(0,255,255,.3);">' + seguro + '</pre>';
+        const bc = document.createElement('button');
+bc.textContent = 'copiar codigo';
+bc.style.cssText = 'display:block;margin-top:4px;background:none;border:1px solid rgba(0,255,255,.3);color:#9ff;font-size:10px;padding:2px 8px;border-radius:4px;';
+bc.onclick = () => { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(codigo).then(() => { bc.textContent = 'copiado'; }); };
+p.appendChild(bc);
         chat.appendChild(p);
         chat.scrollTop = chat.scrollHeight;
       } catch (e) {

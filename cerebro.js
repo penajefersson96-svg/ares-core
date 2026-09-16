@@ -2,7 +2,7 @@
 const AresCerebro = {
   HIST: 'ares_historial',
   img: null,
-  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest' },
+  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest', manos:'manos.js', boveda:'boveda.js', comandos:'comandos.js',
   leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
   recordar: (quien, t) => {
     const h = AresCerebro.leerHist();

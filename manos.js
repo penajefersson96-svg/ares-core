@@ -18,6 +18,8 @@ const AresManos = {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(archivo));
         const codigo = await ro.text();
+        if (!/\.[a-z]+$/i.test(String(archivo || objetivo))) { AresCerebro.mostrar('ARES', 'Indique el archivo con su extension, señor (ejemplo: manos.js).'); return; }
+if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('ARES', 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso, señor.'); return; }
         const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
@@ -38,6 +40,8 @@ const AresManos = {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
         const codigo = await ro.text();
+        if (!/\.[a-z]+$/i.test(String(archivo || objetivo))) { AresCerebro.mostrar('ARES', 'Indique el archivo con su extension, señor (ejemplo: manos.js).'); return; }
+        if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('ARES', 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso, señor.'); return; }
         const r1 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })

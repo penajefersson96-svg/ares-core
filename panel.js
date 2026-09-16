@@ -23,9 +23,10 @@ const AresPanel = {
       '.p-consola #entrada{flex:1 1 100%;min-height:38px;max-height:96px;overflow-y:auto;background:rgba(0,0,0,.6);border:1px solid rgba(0,255,255,.4);color:#9ff;padding:9px;border-radius:6px;font:inherit;resize:none;outline:none;}',
       '.p-consola #entrada:focus{border-color:#0ff;box-shadow:0 0 8px rgba(0,255,255,.25);}',
       '.p-consola button{flex:0 0 auto;}',
-      '#enviar{background:#0ff;color:#00131a;font-weight:bold;border:none;padding:10px 16px;border-radius:6px;}'
+      '#enviar{background:#0ff;color:#00131a;font-weight:bold;border:none;padding:10px 16px;border-radius:6px;cursor:pointer;}'
     ].join('');
     document.head.appendChild(st);
+    
     if (!document.getElementById('p-abismo')) {
       const ab = document.createElement('div');
       ab.id = 'p-abismo';
@@ -36,14 +37,15 @@ const AresPanel = {
       s1.className = 'p-stars';
       const s2 = document.createElement('div');
       s2.className = 'p-stars2';
-      const sombras1 = Array.from({length: 40}, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(255,255,255,' + (0.4 + Math.random() * 0.6).toFixed(2) + ')');
-      const sombras2 = Array.from({length: 60}, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(150,255,255,' + (0.3 + Math.random() * 0.5).toFixed(2) + ')');
+      const sombras1 = Array.from({ length: 40 }, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(255,255,255,' + (0.4 + Math.random() * 0.6).toFixed(2) + ')');
+      const sombras2 = Array.from({ length: 60 }, () => Math.floor(Math.random() * 100) + 'vw ' + Math.floor(Math.random() * 100) + 'vh 0 rgba(150,255,255,' + (0.3 + Math.random() * 0.5).toFixed(2) + ')');
       s1.style.boxShadow = sombras1.join(',');
       s2.style.boxShadow = sombras2.join(',');
       ab.appendChild(s1);
       ab.appendChild(s2);
       document.body.prepend(ab);
     }
+    
     const h = document.querySelector('header');
     if (h && !h.querySelector('.p-banner')) {
       const s = document.createElement('div');
@@ -55,6 +57,7 @@ const AresPanel = {
       b.textContent = 'ARES // VENTAJA COGNITIVA';
       h.prepend(b);
     }
+    
     if (typeof AresCerebro !== 'undefined') {
       const original = AresCerebro.mostrar;
       AresCerebro.mostrar = (q, m) => {
@@ -75,6 +78,7 @@ const AresPanel = {
         }
       };
     }
+    
     const viejo = document.getElementById('entrada');
     if (viejo && viejo.tagName !== 'TEXTAREA') {
       const ta = document.createElement('textarea');
@@ -83,18 +87,46 @@ const AresPanel = {
       ta.rows = 1;
       viejo.parentNode.replaceChild(ta, viejo);
     }
+    
     const ta3 = document.getElementById('entrada');
     if (ta3) {
       const fila = ta3.parentNode;
       if (fila) fila.className = 'p-consola';
-      ta3.addEventListener('input', () => { ta3.style.height = 'auto'; ta3.style.height = Math.min(96, ta3.scrollHeight) + 'px'; });
-      if (typeof AresCerebro !== 'undefined') {
-        ta3.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); AresCerebro.enviar(); } };
-      }
+      
+      ta3.addEventListener('input', () => {
+        ta3.style.height = 'auto';
+        ta3.style.height = Math.min(96, ta3.scrollHeight) + 'px';
+      });
+      
+      ta3.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          const env = document.getElementById('enviar');
+          if (env) {
+            env.click();
+            ta3.style.height = 'auto';
+          }
+        }
+      });
     }
-    const avisar = () => { if (typeof AresDiag !== 'undefined') AresDiag.log('PANEL NAVE V9: consola estilo chat.'); else setTimeout(avisar, 300); };
-    avisar();
+    
+    // Atajo global de teclado (Alt + A para enfocar consola)
+    document.addEventListener('keydown', (e) => {
+      if (e.altKey && e.key.toLowerCase() === 'a') {
+        e.preventDefault();
+        if (ta3) ta3.focus();
+      }
+    });
+    
+    if (typeof AresDiag !== 'undefined') {
+      AresDiag.log('AresPanel v9 — Consola estilo chat cargada y lista.');
+    }
   }
 };
-document.addEventListener('DOMContentLoaded', AresPanel.init);
-// FIN PANEL V9
+
+// Inicialización segura del sistema
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => AresPanel.init());
+} else {
+  AresPanel.init();
+}

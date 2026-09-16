@@ -200,6 +200,24 @@ if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez,
       });
       return;
     }
+    if (/^(autoeval|evaluate yourself|calificate)$/.test(tLow)) {
+      try {
+        const res6 = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'Revisa tu ultima respuesta de este hilo y calificala con honestidad de 1 a 10 en: precision, utilidad y tono Jarvis. Formato: P:x U:y T:z seguido de una linea de autocrítica y una propuesta de mejora. Llámalo "señor".', historial: hist, hechos })
+        });
+        const d10 = await res6.json();
+        const nota = String(d10.respuesta || '');
+        try {
+          const ev = JSON.parse(localStorage.getItem('ares_autoeval') || '[]');
+          ev.push({ d: new Date().toLocaleDateString(), s: nota.slice(0, 200) });
+          while (ev.length > 30) ev.shift();
+          localStorage.setItem('ares_autoeval', JSON.stringify(ev));
+        } catch (e) {}
+        AresCerebro.mostrar('ARES', nota || 'No pude evaluarme ahora, señor.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mi espejo interno está nublado, señor.'); }
+      return;
+    }
     const mEspejo = texto.match(/^espejo\s+([\w.\-\/]+)$/i);
     if (mEspejo) {
       try {
@@ -339,7 +357,7 @@ p.appendChild(bc);
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor: el reactor quedo en marcha lenta esperandole.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor.');
         }
       }
     });

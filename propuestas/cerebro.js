@@ -1,0 +1,1 @@
+[[ACCION: manos: cerebro.js]]

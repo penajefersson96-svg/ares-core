@@ -26,9 +26,9 @@ const AresCerebro = {
     else if (texto.includes('futuro')) respuesta = 'Visualizo una interfaz holografica y aprendizaje autonomo, socio.';
     AresCerebro.mostrar('ARES', respuesta);
   },
-  enviar: async () => {
+  enviar: async (forzado, silencioso) => {
     const input = document.getElementById('entrada');
-    const texto = input.value.trim();
+    const texto = (forzado || input.value).trim();
     if (!texto) return;
     const hist = AresCerebro.leerHist().slice(-10);
     let hechos = '';
@@ -36,7 +36,7 @@ const AresCerebro = {
     try { const bvH = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvH && bvH.desc) hechos = (hechos && hechos !== '{}' ? hechos + ' ' : '') + 'Rostro de mi creador: ' + bvH.desc; } catch (e) {}
     let caraRef = null;
     try { const bvR = JSON.parse(localStorage.getItem('ares_boveda') || 'null'); if (bvR && bvR.cara && AresCerebro.img) caraRef = bvR.cara; } catch (e) {}
-    AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
+    if (!silencioso) AresCerebro.mostrar('TÚ', texto + (AresCerebro.img ? ' 📷' : ''));
     input.value = '';
     input.blur();
     const tLow = texto.toLowerCase().trim();

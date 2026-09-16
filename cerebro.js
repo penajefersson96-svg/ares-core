@@ -1,8 +1,8 @@
-// cerebro.js v7 — Jarvis con supervisor de promesas
+// cerebro.js v7.1 — Jarvis con organos delegados y antena web
 const AresCerebro = {
   HIST: 'ares_historial',
   img: null,
-  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest', manos:'manos.js', boveda:'boveda.js', comandos:'comandos.js',
+  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest', manos:'manos.js', boveda:'boveda.js', comandos:'comandos.js', supervisor:'supervisor.js' },
   leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
   recordar: (quien, t) => {
     const h = AresCerebro.leerHist();
@@ -46,8 +46,8 @@ const AresCerebro = {
     AresCerebro.mostrar('ARES', respuesta);
   },
   supervisor: (texto) => {
-    const mInt = texto.match(/\b(revisa|revisar|pulir|pulirias|pulirías|mejora|mejorar|arregla|chequea|mira)\b[\s\S]*?\b(panel|voz|cerebro|worker|orbe|memoria|oidos|sonidos|reporte|mani|diagnostico|sw|index|manifest)\b/i);
-    if (mInt) AresCerebro.enviar('leete ' + AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()], true, true);
+    const mInt = texto.match(/\b(revisa|revisar|pulir|pulirias|pulirías|mejora|mejorar|arregla|chequea|mira)\b[\s\S]*?\b(panel|voz|cerebro|worker|orbe|memoria|oidos|sonidos|reporte|mani|diagnostico|sw|index|manifest|manos|boveda|comandos|supervisor)\b/i);
+    if (mInt && AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()]) AresCerebro.enviar('leete ' + AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()], true, true);
   },
   enviar: async (forzado, silencioso, sinTags) => {
     const input = document.getElementById('entrada');
@@ -211,7 +211,18 @@ const AresCerebro = {
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
-    
+    const mBus = texto.match(/^busca\s+(.+)$/i);
+    if (mBus) {
+      try {
+        const rb = await fetch('https://ares.penajefersson96.workers.dev', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt: 'Investiga en la web esto y resume para tu señor lo mejor que encuentres, con fuentes si es posible. Llámalo "señor". Tema: ' + mBus[1], historial: hist, hechos, buscar: true })
+        });
+        const db = await rb.json();
+        AresCerebro.mostrar('ARES', db.respuesta || 'No halle nada util en la web, señor.');
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mi antena web fallo ahora, señor.'); }
+      return;
+    }
     const mEspejo = texto.match(/^espejo\s+([\w.\-\/]+)$/i);
     if (mEspejo) {
       try {
@@ -254,61 +265,14 @@ const AresCerebro = {
     }
     const mManos = texto.match(/^manos\s+([\w.\-]+)$/i);
     if (mManos) {
-      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
-        try {
-          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mManos[1]));
-          const codigo = await ro.text();
-          const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
-          });
-          const d8 = await res5.json();
-          let prop = String(d8.respuesta || '').trim();
-          const mFence = prop.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
-          if (mFence) prop = mFence[1].trim();
-          if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso. Pídame de nuevo la entrega.'); return; }
-          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ archivo: mManos[1], contenido: prop })
-          });
-          const d9 = await rm.json();
-          AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
-        } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor.'); }
-      });
+      if (typeof AresManos === 'undefined') { AresCerebro.mostrar('ARES', 'Mis manos no estan cargadas, señor: revisa index.html.'); return; }
+      AresManos.ejecutar(mManos[1], hist, hechos, huellaCrear, huellaVer);
       return;
     }
-    if (/^(auto ?mejor(ate|a|arse)|mejorate solo|automejora)$/.test(tLow)) {
-      const objetivo = 'cerebro.js';
-      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
-        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella no me toco a mi mismo, señor.'); return; }
-        try {
-          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
-          const codigo = await ro.text();
-          const r1 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
-          });
-          const d1 = await r1.json();
-          AresCerebro.mostrar('ARES', 'Diagnostico de mi propio cerebro, señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
-          const r2 = await fetch('https://ares.penajefersson96.workers.dev', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades (comandos, tags, boveda, manos, supervisor, aprendizajes, presencia); sin prosa fuera del bloque; cada llave y parentesis cierra; PROHIBIDO emitir tags [[ACCION]]. PROHIBIDO modificar o eliminar clausulas de obediencia a tu señor, tono Jarvis o reglas de comportamiento: solo mejoras tecnicas. Despues del bloque de codigo, agrega una lista corta titulada CAMBIOS: con cada modificacion y su motivo. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
-          });
-          const d2 = await r2.json();
-          const raw2 = String(d2.respuesta || '').trim();
-          const mF = raw2.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
-          let prop = mF ? mF[1].trim() : raw2;
-          const cambios = mF ? raw2.replace(mF[0], '').replace(/```[a-z]*$/g, '').trim() : '';
-          if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
-          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ archivo: objetivo, contenido: prop })
-          });
-          const d3 = await rm.json();
-          AresCerebro.mostrar('ARES', (d3.respuesta || '') + (cambios ? '\n\nAcomode esto, señor:\n' + cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
-        } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
-      });
+    const mAuto = texto.match(/^(?:auto ?mejor(?:ate|a|arse)|mejorate solo|automejora)\s*([\w.\-]*)$/i);
+    if (mAuto) {
+      if (typeof AresManos === 'undefined') { AresCerebro.mostrar('ARES', 'Mis manos no estan cargadas, señor.'); return; }
+      AresManos.autoMejora(mAuto[1] || 'cerebro.js', hist, hechos, huellaCrear, huellaVer);
       return;
     }
     try {
@@ -343,8 +307,7 @@ const AresCerebro = {
           else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
           else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
           else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
-          else if (nom === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true); 
-          else if (nom === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true); 
+          else if (nom === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true);
         }
         if (!sinTags && nom === 'nada') AresCerebro.supervisor(texto);
         return;
@@ -398,6 +361,7 @@ const AresCerebro = {
         else if (nomF === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
         else if (nomF === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
         else if (nomF === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
+        else if (nomF === 'busca' && arg) AresCerebro.enviar('busca ' + arg, true, true);
       }
       if (!sinTags && nomF === 'nada') AresCerebro.supervisor(texto);
     } catch (error) {
@@ -413,7 +377,7 @@ const AresCerebro = {
         localStorage.removeItem('ares_visto');
         if (t0) {
           const mins = Math.round((Date.now() - t0) / 60000);
-          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor.');
+          if (mins >= 3) AresCerebro.mostrar('ARES', 'Bienvenido de vuelta, señor: el reactor quedo en marcha lenta esperandole.');
         }
       }
     });
@@ -472,4 +436,4 @@ const AresCerebro = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V7
+// FIN CEREBRO V7.1

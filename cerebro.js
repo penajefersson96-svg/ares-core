@@ -176,7 +176,7 @@ const AresCerebro = {
     }
     const mManos = texto.match(/^manos\s+([\w.\-]+)$/i);
     if (mManos) {
-      huellaVer().then(async (ok) => {
+      (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()).then(async (ok) => {
         if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
         try {
           const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mManos[1]));

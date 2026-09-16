@@ -88,7 +88,7 @@ const AresVoz = {
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9áéíóúñü ]/gi, '');
     s.cancel();
-    const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.name === 'español Estados Unidos') || s.getVoices().find(x => x.lang.startsWith('es'));
+    const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.lang === 'es-MX') || s.getVoices().find(x => x.lang === 'es-419') || s.getVoices().find(x => x.lang === 'es-US') || s.getVoices().find(x => x.lang === 'es-ES') || s.getVoices().find(x => x.lang.startsWith('es'));
     const emo = AresVoz.emocionDe(texto);
     if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
     if (emo === 'tristeza') setTimeout(() => AresVoz.sonidoEmoji('1f622'), 200);

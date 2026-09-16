@@ -18,13 +18,14 @@ export default {
     }
 
     if (ruta === '/api/manos') {
-      if (request.method !== 'POST') return new Response('Manos listas.', { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
+      const R2 = (t) => new Response(JSON.stringify({ respuesta: t }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      if (request.method !== 'POST') return R2('Manos listas.');
       const c = await request.json();
       const nombre = String(c.archivo || '').replace(/[^a-z0-9._-]/gi, '');
       const contenido = String(c.contenido || '');
-      if (!nombre || !contenido) return Reply('Manos vacias: falta archivo o contenido.');
+      if (!nombre || !contenido) return R2('Manos vacias: falta archivo o contenido.');
       const tok = env.GITHUB_TOKEN;
-      if (!tok) return Reply('Aviso: mis manos aun no tienen llave de GitHub, señor.');
+      if (!tok) return R2('Aviso: mis manos aun no tienen llave de GitHub, señor.');
       const rutaG = 'propuestas/' + nombre;
       const prev = await fetch('https://api.github.com/repos/penajefersson96-svg/ares-core/contents/' + rutaG + '?ref=campito', { headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares' } });
       let sha = null;
@@ -34,8 +35,8 @@ export default {
         headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares', 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'propuesta de Ares: ' + nombre, content: btoa(unescape(encodeURIComponent(contenido))), branch: 'campito', sha: sha || undefined })
       });
-      if (!put.ok) return Reply('GitHub rechazo el archivo: status ' + put.status);
-      return Reply('Propuesta sellada en campito/propuestas/' + nombre + '. Esperando su revision y firma, señor.');
+      if (!put.ok) return R2('GitHub rechazo el archivo: status ' + put.status);
+      return R2('Propuesta sellada en campito/propuestas/' + nombre + '. Esperando su revision y firma, señor.');
     }
 
     if (request.method === 'OPTIONS') {

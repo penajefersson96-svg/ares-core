@@ -174,6 +174,30 @@ const AresCerebro = {
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
+    const mManos = texto.match(/^manos\s+([\w.\-]+)$/i);
+    if (mManos) {
+      huellaVer().then(async (ok) => {
+        if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
+        try {
+          const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mManos[1]));
+          const codigo = await ro.text();
+          const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo, sin explicaciones, sin markdown, sin lineas extra. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+          });
+          const d8 = await res5.json();
+          const prop = String(d8.respuesta || '').trim();
+          if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez, señor.'); return; }
+          const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ archivo: mManos[1], contenido: prop })
+          });
+          const d9 = await rm.json();
+          AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
+        } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor.'); }
+      });
+      return;
+    }
     const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
     if (mEspejo) {
       try {

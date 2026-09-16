@@ -251,7 +251,6 @@ AresCerebro.img = null;
         if (!hablo && full.trim()) AresVoz.hablar(full);
       }
       if (full.trim()) AresCerebro.recordar('ARES', full);
-    } catch (error) {
       const mTagF = full.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
       if (mTagF) {
         const nom = mTagF[1].toLowerCase();
@@ -266,6 +265,7 @@ AresCerebro.img = null;
         else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true);
         else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true);
       }
+    } catch (error) {
       AresCerebro.pensarLocal(texto);
     }
   },

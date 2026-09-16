@@ -436,4 +436,3 @@ const AresCerebro = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresCerebro.init);
-// FIN CEREBRO V7.1

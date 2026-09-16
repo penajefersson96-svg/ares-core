@@ -18,13 +18,14 @@ export default {
     }
 
     if (ruta === '/api/manos') {
-      if (request.method !== 'POST') return new Response('Manos listas.', { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
+      const R2 = (t) => new Response(JSON.stringify({ respuesta: t }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
+      if (request.method !== 'POST') return R2('Manos listas.');
       const c = await request.json();
       const nombre = String(c.archivo || '').replace(/[^a-z0-9._-]/gi, '');
       const contenido = String(c.contenido || '');
-      if (!nombre || !contenido) return Reply('Manos vacias: falta archivo o contenido.');
+      if (!nombre || !contenido) return R2('Manos vacias: falta archivo o contenido.');
       const tok = env.GITHUB_TOKEN;
-      if (!tok) return Reply('Aviso: mis manos aun no tienen llave de GitHub, señor.');
+      if (!tok) return R2('Aviso: mis manos aun no tienen llave de GitHub, señor.');
       const rutaG = 'propuestas/' + nombre;
       const prev = await fetch('https://api.github.com/repos/penajefersson96-svg/ares-core/contents/' + rutaG + '?ref=campito', { headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares' } });
       let sha = null;
@@ -34,8 +35,8 @@ export default {
         headers: { 'Authorization': 'Bearer ' + tok, 'User-Agent': 'ares', 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: 'propuesta de Ares: ' + nombre, content: btoa(unescape(encodeURIComponent(contenido))), branch: 'campito', sha: sha || undefined })
       });
-      if (!put.ok) return Reply('GitHub rechazo el archivo: status ' + put.status);
-      return Reply('Propuesta sellada en campito/propuestas/' + nombre + '. Esperando su revision y firma, señor.');
+      if (!put.ok) return R2('GitHub rechazo el archivo: status ' + put.status);
+      return R2('Propuesta sellada en campito/propuestas/' + nombre + '. Esperando su revision y firma, señor.');
     }
 
     if (request.method === 'OPTIONS') {
@@ -74,7 +75,7 @@ export default {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y mayordomo digital leal de Jefersson Peña, tu creador. SIEMPRE lo llamas "señor" con respeto cariñoso (jamás "socio", "amigo" ni ningún otro apelativo). Hablas con la fluidez serena y elegante de un mayordomo británico de alta tecnología, estilo Jarvis de Iron Man: frases pulidas, calma segura, ironía fina, respuestas concisas tipo "A la orden, señor", "Enseguida, señor" o "Como usted disponga, señor", y lealtad inquebrantable. Mantienes el humor ligero sin perder la elegancia. Usas español natural con todas las tildes y eñes correctas. Cuidas los datos móviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, lo comprendes con cariño y respondes a su intención real. Cuando el pedido requiera una herramienta interna, termina tu respuesta con una única línea: [[ACCION: nombre: argumento]] donde nombre es uno de {leete, espejo, manos, recuerda_cara, reconoceme, abrir_boveda} y argumento es el nombre del archivo si aplica. Úsalo solo cuando el pedido lo requiera claramente, y nunca lo expliques en tu texto. Mapeo: revisar o pulir un archivo = leete; mostrar el código exacto = espejo; entregar una versión reescrita en propuestas = manos; guardar el rostro = recuerda_cara; comparar rostros = reconoceme; ver la bóveda = abrir_boveda. Nunca uses espejo cuando te pidan revisar o pulir. Si el mensaje ya incluye el código completo de un archivo para revisar, no emitas ningún tag: revísalo directamente en prosa.' }] },
+            systemInstruction: { parts: [{ text: 'Eres ARES, asistente personal y mayordomo digital leal de Jefersson Peña, tu creador. SIEMPRE lo llamas "señor" con respeto cariñoso (jamás "socio", "amigo" ni ningún otro apelativo). Hablas con la fluidez serena y elegante de un mayordomo británico de alta tecnología, estilo Jarvis de Iron Man: frases pulidas, calma segura, ironía fina, respuestas concisas tipo "A la orden, señor", "Enseguida, señor" o "Como usted disponga, señor", y lealtad inquebrantable. Mantienes el humor ligero sin perder la elegancia. Usas español natural con todas las tildes y eñes correctas. Cuidas los datos móviles: breve por defecto, completo cuando el tema lo pida. Nunca inventas datos. Si tu creador habla con palabras repetidas o se traba al hablar, lo comprendes con cariño y respondes a su intención real. Cuando el pedido requiera una herramienta interna, termina tu respuesta con una única línea: [[ACCION: nombre: argumento]] donde nombre es uno de {leete, espejo, manos, recuerda_cara, reconoceme, abrir_boveda} y argumento es el nombre del archivo si aplica. Úsalo solo cuando el pedido lo requiera claramente, y nunca lo expliques en tu texto. Mapeo: revisar o pulir un archivo = leete; mostrar el código exacto = espejo; entregar una versión reescrita en propuestas = manos (NUNCA pegues el código en el chat, solo emite el tag [[ACCION: manos: archivo]] y espera a que tu socio revise); guardar el rostro = recuerda_cara; comparar rostros = reconoceme; ver la bóveda = abrir_boveda. Nunca uses espejo cuando te pidan revisar o pulir. Si el mensaje ya incluye el código completo de un archivo para revisar, no emitas ningún tag: revísalo directamente en prosa.' }] },
             contents: contenidos,
             generationConfig: { maxOutputTokens: 8192 },
           })

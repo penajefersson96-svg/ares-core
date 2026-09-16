@@ -198,7 +198,7 @@ const AresCerebro = {
       });
       return;
     }
-    const mEspejo = texto.match(/^espejo\s+([\w.\-]+)$/i);
+    const mEspejo = texto.match(/^espejo\s+([\w.\-\/]+)$/i);
     if (mEspejo) {
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(mEspejo[1]));

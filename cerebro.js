@@ -2,6 +2,7 @@
 const AresCerebro = {
   HIST: 'ares_historial',
   img: null,
+  MAPA_ARCH: { panel:'panel.js', voz:'voz.js', cerebro:'cerebro.js', worker:'worker.js', orbe:'orbe.js', memoria:'memoria.js', oidos:'oidos.js', sonidos:'sonidos.js', reporte:'reporte.js', mani:'mani.js', diagnostico:'diagnostico.js', sw:'sw.js', index:'index.html', manifest:'manifest.webmanifest' },
   leerHist: () => { try { return JSON.parse(localStorage.getItem(AresCerebro.HIST)) || []; } catch (e) { return []; } },
   recordar: (quien, t) => {
     const h = AresCerebro.leerHist();
@@ -220,23 +221,29 @@ const AresCerebro = {
       if (!res.ok) throw new Error('Sin servidor');
       const ct = res.headers.get('content-type') || '';
       if (ct.includes('application/json')) {
-        const d4 = await res.json();
-        let tResp = d4.respuesta || '';
-        const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
-        if (mTag) tResp = tResp.replace(mTag[0], '').trim();
-        AresCerebro.mostrar('ARES', tResp);
-        if (mTag && !sinTags) {
-          let nom = mTag[1].toLowerCase();
-          const arg = (mTag[2] || '').trim();
-          if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
-          if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
-          else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
-          else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
-          else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
-          else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
-          else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
-        }
-        return;
+  const d4 = await res.json();
+  let tResp = d4.respuesta || '';
+  const mTag = tResp.match(/\[\[ACCION:\s*([a-z_]+)(?::\s*([^\]]*))?\]\]/i);
+  if (mTag) tResp = tResp.replace(mTag[0], '').trim();
+  AresCerebro.mostrar('ARES', tResp);
+  let nom = 'nada';
+  if (mTag && !sinTags) {
+    nom = mTag[1].toLowerCase();
+    const arg = (mTag[2] || '').trim();
+    if (arg && texto.toLowerCase().indexOf(arg.toLowerCase().split('.')[0]) < 0) nom = 'nada';
+    if (nom === 'leete' && arg) AresCerebro.enviar('leete ' + arg, true, true);
+    else if (nom === 'espejo' && arg) AresCerebro.enviar('espejo ' + arg, true, true);
+    else if (nom === 'manos' && arg) AresCerebro.enviar('manos ' + arg, true, true);
+    else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
+    else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
+    else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
+  }
+  if (!sinTags && nom === 'nada') {
+    const mInt = texto.match(/\b(revisa|revisar|pulir|pulirias|pulirías|mejora|mejorar|arregla|chequea|mira)\b[\s\S]*?\b(panel|voz|cerebro|worker|orbe|memoria|oidos|sonidos|reporte|mani|diagnostico|sw|index|manifest)\b/i);
+    if (mInt) AresCerebro.enviar('leete ' + AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()], true, true);
+  }
+  return;
+}
       }
       const chat = document.getElementById('chat');
       const p = document.createElement('p');
@@ -286,7 +293,12 @@ const AresCerebro = {
         else if (nom === 'recuerda_cara') AresCerebro.enviar('recuerda mi cara', true, true);
         else if (nom === 'reconoceme') AresCerebro.enviar('reconoceme', true, true);
         else if (nom === 'abrir_boveda') AresCerebro.enviar('abrir boveda', true, true);
-      }
+}
+if (!sinTags && (!mTag || nom === 'nada')) {
+  const mInt = texto.match(/\b(revisa|revisar|pulir|pulirias|pulirías|mejora|mejorar|arregla|chequea|mira)\b[\s\S]*?\b(panel|voz|cerebro|worker|orbe|memoria|oidos|sonidos|reporte|mani|diagnostico|sw|index|manifest)\b/i);
+  if (mInt) AresCerebro.enviar('leete ' + AresCerebro.MAPA_ARCH[mInt[2].toLowerCase()], true, true);
+}
+return;
     } catch (error) {
       AresCerebro.pensarLocal(texto);
     }

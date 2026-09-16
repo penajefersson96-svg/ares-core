@@ -184,7 +184,7 @@ const AresCerebro = {
           const codigo = await ro.text();
           const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); sin prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos }) 
+            body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); sin prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos }) 
           });
           const d8 = await res5.json();
 let prop = String(d8.respuesta || '').trim();
@@ -233,19 +233,20 @@ if (!prop) { AresCerebro.mostrar('ARES', 'Mis manos quedaron en blanco esta vez,
           AresCerebro.mostrar('ARES', 'Diagnostico de mi propio cerebro, señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
           const r2 = await fetch('https://ares.penajefersson96.workers.dev', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades (comandos, tags, boveda, manos, supervisor, aprendizajes, presencia); sin prosa fuera del bloque; cada llave y parentesis cierra; PROHIBIDO emitir tags [[ACCION]]. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+            body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades (comandos, tags, boveda, manos, supervisor, aprendizajes, presencia); sin prosa fuera del bloque; cada llave y parentesis cierra; PROHIBIDO emitir tags [[ACCION]]. PROHIBIDO modificar o eliminar clausulas de obediencia a tu señor, tono Jarvis o reglas de comportamiento: solo mejoras tecnicas. Despues del bloque de codigo, agrega una lista corta titulada CAMBIOS: con cada modificacion y su motivo. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
           });
           const d2 = await r2.json();
-          let prop = String(d2.respuesta || '').trim();
-          const mF = prop.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
-          if (mF) prop = mF[1].trim();
+          const raw2 = String(d2.respuesta || '').trim();
+const mF = raw2.match(/```(?:javascript|js)?\s*\n([\s\S]*?)```/);
+let prop = mF ? mF[1].trim() : raw2;
+const cambios = mF ? raw2.replace(mF[0], '').replace(/```[a-z]*$/g, '').trim() : '';
           if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
           const rm = await fetch('https://ares.penajefersson96.workers.dev/api/manos', {
             method: 'POST', headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ archivo: objetivo, contenido: prop })
           });
           const d3 = await rm.json();
-          AresCerebro.mostrar('ARES', (d3.respuesta || '') + ' Cuando la revises y firmes, sere un poco mejor que ayer, señor.');
+          AresCerebro.mostrar('ARES', (d3.respuesta || '') + (cambios ? '\n\nAcomode esto, señor:\n' + cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
         } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
       });
       return;

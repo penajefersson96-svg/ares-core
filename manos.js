@@ -1,4 +1,4 @@
-// manos.js v2 — Manos con control de sintaxis
+// manos.js v3 — Manos con cerradura, control de sintaxis y reporte de cambios
 const AresManos = {
   puerta: (huellaCrear, huellaVer) => (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()),
   limpiar: (raw) => {
@@ -12,14 +12,19 @@ const AresManos = {
     });
     return await rm.json();
   },
+  validar: (nombre, codigo) => {
+    if (!/\.[a-z]+$/i.test(nombre)) return 'Indique el archivo con su extension, señor (ejemplo: manos.js).';
+    if (/^(No pude leer|Archivo no permitido)/.test(codigo)) return 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso sobre el, señor.';
+    return null;
+  },
   ejecutar: (archivo, hist, hechos, huellaCrear, huellaVer) => {
     AresManos.puerta(huellaCrear, huellaVer).then(async (ok) => {
       if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(archivo));
         const codigo = await ro.text();
-        if (!/\.[a-z]+$/i.test(String(archivo || objetivo))) { AresCerebro.mostrar('ARES', 'Indique el archivo con su extension, señor (ejemplo: manos.js).'); return; }
-if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('ARES', 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso, señor.'); return; }
+        const fallo = AresManos.validar(archivo, codigo);
+        if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
@@ -31,7 +36,7 @@ if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('
         if (/\.js$/.test(archivo)) { try { new Function(prop); } catch (e) { AresCerebro.mostrar('ARES', 'Control de calidad: error de sintaxis (' + e.message + '). No sellare, señor.'); return; } }
         const d9 = await AresManos.sellar(archivo, prop);
         AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
-      } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor.'); }
+      } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
     });
   },
   autoMejora: (objetivo, hist, hechos, huellaCrear, huellaVer) => {
@@ -40,8 +45,8 @@ if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('
       try {
         const ro = await fetch('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
         const codigo = await ro.text();
-        if (!/\.[a-z]+$/i.test(String(archivo || objetivo))) { AresCerebro.mostrar('ARES', 'Indique el archivo con su extension, señor (ejemplo: manos.js).'); return; }
-        if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('ARES', 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso, señor.'); return; }
+        const fallo = AresManos.validar(objetivo, codigo);
+        if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const r1 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
@@ -63,4 +68,4 @@ if (/^(No pude leer|Archivo no permitido)/.test(codigo)) { AresCerebro.mostrar('
     });
   }
 };
-// FIN MANOS V2
+// FIN MANOS V3

@@ -1,10 +1,12 @@
-// voz.js v9 — parche 2.5: sonidos reales, sin acotaciones habladas
+// voz.js v10 — cola de voz: no se pisa nunca
 const AresVoz = {
   activada: true,
   saltar: false,
   ultimo: '',
   soportada: ('speechSynthesis' in window),
   audio: null,
+  hablando: false,
+  cola_pendiente: [],
 
   vozGuardada: () => {
     const nombre = localStorage.getItem('ares_voz');
@@ -87,7 +89,6 @@ const AresVoz = {
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9áéíóúñü ]/gi, '');
-    s.cancel();
     const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.lang === 'es-MX') || s.getVoices().find(x => x.lang === 'es-419') || s.getVoices().find(x => x.lang === 'es-US') || s.getVoices().find(x => x.lang === 'es-ES') || s.getVoices().find(x => x.lang.startsWith('es'));
     const emo = AresVoz.emocionDe(texto);
     if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
@@ -101,15 +102,46 @@ const AresVoz = {
       else { trozo += f; }
     });
     if (trozo.trim()) cola.push(trozo);
-    cola.forEach(c => {
-      const u = new SpeechSynthesisUtterance(c);
-      if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
-      if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
-      else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
-      else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
-      else { u.pitch = 0.9; u.rate = 1; }
-      s.speak(u);
-    });
+    
+    // COLA DE VOZ: si ya hay algo hablando, agrega a cola_pendiente en lugar de cancelar
+    if (AresVoz.hablando) {
+      AresVoz.cola_pendiente.push(...cola);
+      return;
+    }
+    
+    AresVoz.hablando = true;
+    AresVoz.cola_pendiente = [...cola];
+    AresVoz.procesarCola(v, emo);
+  },
+
+  procesarCola: (v, emo) => {
+    const s = window.speechSynthesis;
+    if (AresVoz.cola_pendiente.length === 0) {
+      AresVoz.hablando = false;
+      return;
+    }
+    const c = AresVoz.cola_pendiente.shift();
+    const u = new SpeechSynthesisUtterance(c);
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+    if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
+    else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
+    else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
+    else { u.pitch = 0.9; u.rate = 1; }
+    
+    u.onend = () => {
+      setTimeout(() => AresVoz.procesarCola(v, emo), 100);
+    };
+    u.onerror = () => {
+      AresVoz.hablando = false;
+    };
+    
+    s.speak(u);
+  },
+
+  cancelar: () => {
+    window.speechSynthesis.cancel();
+    AresVoz.hablando = false;
+    AresVoz.cola_pendiente = [];
   },
 
   listar: () => {
@@ -139,7 +171,7 @@ const AresVoz = {
           if (t === 'voces') { AresVoz.saltar = true; AresVoz.listar(); }
           const m = t.match(/^voz (\d+)$/);
           if (m) { AresVoz.saltar = true; AresVoz.elegir(Number(m[1])); }
-          if (t === 'silencio') { AresVoz.activada = false; window.speechSynthesis.cancel(); }
+          if (t === 'silencio') { AresVoz.activada = false; AresVoz.cancelar(); }
           if (t === 'habla') { AresVoz.activada = true; }
         }
         if (quien === 'ARES') {
@@ -150,4 +182,4 @@ const AresVoz = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);
-// FIN VOZ V9
+// FIN VOZ V10

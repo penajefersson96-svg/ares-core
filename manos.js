@@ -27,7 +27,7 @@ const AresManos = {
         if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const res5 = await fetch('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
+          body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo dentro de un bloque ```javascript ... ```. Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos de teclado, registros de diagnostico y lineas finales de arranque); no escribas prosa antes ni despues del bloque; cada llave y parentesis que abras debe cerrar; conserva las expresiones regulares existentes copiandolas exactamente sin reescribirlas; PROHIBIDO emitir tags [[ACCION]] en esta respuesta: es una reescritura de archivo, no una conversacion. Tampoco modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. Archivo actual:\n\n' + codigo.slice(0, 6000), historial: hist, hechos })
         });
         const d8 = await res5.json();
         const limpio = AresManos.limpiar(String(d8.respuesta || '').trim());

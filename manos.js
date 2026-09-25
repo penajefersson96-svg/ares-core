@@ -50,7 +50,7 @@ const AresManos = {
         });
         const d8 = await res5.json();
         const limpio = AresManos.limpiar(d8.respuesta);
-        const prop = limpio.code;
+        let prop = limpio.code;
         if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso.'); return; }
         if (/\.js$/.test(archivo)) { try { new Function(prop); } catch (e) { AresManos.cuarentena(prop, e); return; } }
         const d9 = await AresManos.sellar(archivo, prop);
@@ -78,7 +78,7 @@ const AresManos = {
         });
         const d2 = await r2.json();
         const limpio = AresManos.limpiar(d2.respuesta);
-        const prop = limpio.code;
+        let prop = limpio.code;
         if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
         if (/\.js$/.test(objetivo)) { try { new Function(prop); } catch (e) { AresManos.cuarentena(prop, e); return; } }
         const d3 = await AresManos.sellar(objetivo, prop);

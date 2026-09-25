@@ -1,4 +1,4 @@
-// manos.js v7 — vista completa con wifi, escudos intactos
+// manos.js v8 — centinelas: nada de prosa dentro del codigo
 const AresManos = {
   puerta: (huellaCrear, huellaVer) => {
     try { return localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear(); } catch (e) { return huellaCrear(); }
@@ -17,9 +17,16 @@ const AresManos = {
   limpiar: (raw) => {
     const textoSeguro = typeof raw === 'string' ? raw : String(raw || '');
     let code = textoSeguro.trim();
-    if (code.indexOf('```') === 0) {
+    const i1 = code.indexOf('//INICIO-CODIGO');
+    const i2 = code.indexOf('//FIN-CODIGO');
+    if (i1 >= 0 && i2 > i1) {
+      code = code.slice(i1 + 15, i2).trim();
+    } else if (code.indexOf('```') === 0) {
       const mF = code.match(/```(?:javascript|js)?\s*\n([\s\S]*)```/);
       if (mF) code = mF[1].trim();
+    } else {
+      const mLinea = code.match(/^(?:\/\/|const |let |var |function |export |window\.|document\.|class |if |try |switch |import )/m);
+      if (mLinea && mLinea.index > 0) code = code.slice(mLinea.index).trim();
     }
     let cambios = '';
     const iC = code.indexOf('// CAMBIOS:');
@@ -46,7 +53,7 @@ const AresManos = {
   corregir: async (prop, error, hist, hechos) => {
     const rfix = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: 'Este codigo JavaScript tiene un error de sintaxis: ' + error + '. Devuelvelo COMPLETO y corregido, SIN cercas markdown y SIN prosa: conserva todo identico salvo la correccion minima necesaria. Codigo:\n\n' + String(prop).slice(0, AresManos.tope()), historial: hist, hechos })
+      body: JSON.stringify({ prompt: 'Este codigo JavaScript tiene un error de sintaxis: ' + error + '. Devuelvelo COMPLETO y corregido encerrado entre las lineas centinela //INICIO-CODIGO y //FIN-CODIGO, sin escribir NADA fuera de ellas. Conserva todo identico salvo la correccion minima necesaria. Codigo:\n\n' + String(prop).slice(0, AresManos.tope()), historial: hist, hechos })
     });
     const df = await rfix.json();
     return AresManos.limpiar(df.respuesta).code;
@@ -63,6 +70,7 @@ const AresManos = {
     }
   },
   reglas: 'Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos, registros, lineas de arranque); conserva los comentarios originales exactamente y no inventes comentarios nuevos; cada llave y parentesis cierra; conserva las expresiones regulares existentes copiandolas byte por byte sin reescribirlas; PROHIBIDO emitir tags [[ACCION]]; no modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas.',
+  marco: 'Devuelve el codigo encerrado entre dos lineas centinela exactas: la primera linea de tu respuesta debe ser //INICIO-CODIGO y la ultima //FIN-CODIGO. Entre ellas solo JavaScript valido y, al final del codigo, comentarios de una linea que inicien con "// CAMBIOS:" enumerando cada modificacion. Fuera de los centinelas no escribas absolutamente nada: ni saludos, ni prosa, ni markdown. ',
   ejecutar: (archivo, hist, hechos, huellaCrear, huellaVer) => {
     AresManos.puerta(huellaCrear, huellaVer).then(async (ok) => {
       if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
@@ -75,7 +83,7 @@ const AresManos = {
         if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const res5 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Devuelve UNICAMENTE el codigo completo y mejorado de este archivo, SIN bloques markdown ni cercas: la primera linea debe ser codigo o comentario de codigo. Al final agrega comentarios de una linea que inicien exactamente con "// CAMBIOS:" enumerando cada modificacion y su motivo. ' + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
+          body: JSON.stringify({ prompt: AresManos.marco + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
         });
         const d8 = await res5.json();
         const limpio = AresManos.limpiar(d8.respuesta);
@@ -106,7 +114,7 @@ const AresManos = {
         AresCerebro.mostrar('ARES', 'Diagnostico de ' + objetivo + ', señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
         const r2 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Aplica esas mejoras y devuelve UNICAMENTE el codigo completo, SIN bloques markdown ni cercas: la primera linea debe ser codigo o comentario de codigo. Al final agrega comentarios de una linea que inicien exactamente con "// CAMBIOS:" enumerando cada modificacion y su motivo. ' + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
+          body: JSON.stringify({ prompt: 'Aplica esas mejoras. ' + AresManos.marco + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
         });
         const d2 = await r2.json();
         const limpio = AresManos.limpiar(d2.respuesta);
@@ -121,4 +129,4 @@ const AresManos = {
   }
 };
 window.AresManos = AresManos;
-// FIN MANOS V7
+// FIN MANOS V8

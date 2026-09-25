@@ -18,6 +18,27 @@ const r = await fetch('https://raw.githubusercontent.com/penajefersson96-svg/are
       return new Response(t, { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
     }
 
+    if (ruta === '/api/voz') {
+  if (request.method !== 'POST') return Reply('Voz lista.');
+  try {
+    const c = await request.json();
+    const texto = String(c.texto || '').slice(0, 4500);
+    if (!texto) return Reply('Texto vacio, señor.');
+    const key = env.ELEVEN_KEY;
+    const voice = env.ELEVEN_VOICE;
+    if (!key || !voice) return Reply('Mi voz nueva aun no tiene llave o identidad, señor.');
+    const r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + voice + '?output_format=mp3_44100_128', {
+      method: 'POST',
+      headers: { 'xi-api-key': key, 'Content-Type': 'application/json', 'Accept': 'audio/mpeg' },
+      body: JSON.stringify({ text: texto, model_id: 'eleven_multilingual_v2', voice_settings: { stability: 0.55, similarity_boost: 0.8, style: 0.3 } })
+    });
+    if (!r.ok) return Reply('ElevenLabs rechazo la peticion: ' + r.status);
+    const blob = await r.blob();
+    return new Response(blob, { headers: { 'Content-Type': 'audio/mpeg', 'Access-Control-Allow-Origin': '*' } });
+  } catch (e) {
+    return Reply('Mi voz nueva fallo: ' + (e.message || 'sin detalle'));
+  }
+}
     if (ruta === '/api/manos') {
       const R2 = (t) => new Response(JSON.stringify({ respuesta: t }), { headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' } });
 if (request.method === 'OPTIONS') return new Response(null, { headers: { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' } });

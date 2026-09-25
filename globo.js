@@ -62,5 +62,6 @@ const AresGlobo = {
     }
   }
 };
+window.AresGlobo = AresGlobo;
 document.addEventListener('DOMContentLoaded', AresGlobo.init);
 // FIN GLOBO V1

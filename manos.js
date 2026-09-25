@@ -54,6 +54,10 @@ const AresManos = {
       } catch (e2) { AresManos.cuarentena(prop, e2); return null; }
     }
   },
+  tope: () => {
+  const w = !!(navigator.connection && navigator.connection.type === 'wifi');
+  return w ? 60000 : 6000;
+},
   reglas: 'Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos, registros, lineas de arranque); cada llave y parentesis cierra; conserva las expresiones regulares existentes copiandolas byte por byte sin reescribirlas; PROHIBIDO emitir tags [[ACCION]]; no modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas.',
   ejecutar: (archivo, hist, hechos, huellaCrear, huellaVer) => {
     AresManos.puerta(huellaCrear, huellaVer).then(async (ok) => {
@@ -61,7 +65,9 @@ const AresManos = {
       try {
         const ro = await AresManos.fetchT('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(archivo));
         const codigo = await ro.text();
-        const fallo = AresManos.validar(archivo, codigo);
+const corte = AresManos.tope();
+if (codigo.length > corte) { AresCerebro.mostrar('ARES', 'Este archivo pesa mas de lo que puedo reescribir con datos moviles, señor: conecte wifi para auto-mejorarlo.'); return; }
+const fallo = AresManos.validar(archivo, codigo);
         if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const res5 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },

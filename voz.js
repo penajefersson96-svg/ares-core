@@ -1,4 +1,4 @@
-// voz.js v10.1 — cola unificada: nadie interrumpe a nadie
+// voz.js v11 — garganta de ElevenLabs con fallback al motor del telefono
 const AresVoz = {
   activada: true,
   saltar: false,
@@ -7,6 +7,7 @@ const AresVoz = {
   audio: null,
   hablando: false,
   cola: [],
+  elevenActivo: true,
 
   vozGuardada: () => {
     const nombre = localStorage.getItem('ares_voz');
@@ -62,16 +63,39 @@ const AresVoz = {
     } catch (e) {}
   },
 
-  encolar: (t, emo) => {
-    AresVoz.cola.push({ t: t, emo: emo });
+  encolar: (t, emo, usarEleven) => {
+    AresVoz.cola.push({ t: t, emo: emo, usarEleven: usarEleven });
     if (!AresVoz.hablando) AresVoz.procesar();
   },
 
-  procesar: () => {
-    const s = window.speechSynthesis;
+  procesar: async () => {
     if (!AresVoz.cola.length) { AresVoz.hablando = false; return; }
     AresVoz.hablando = true;
     const item = AresVoz.cola.shift();
+    
+    if (AresVoz.elevenActivo && item.usarEleven) {
+      try {
+        const r = await fetch('https://ares.penajefersson96.workers.dev/api/voz', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ texto: item.t })
+        });
+        if (r.ok) {
+          const blob = await r.blob();
+          const url = URL.createObjectURL(blob);
+          const audio = new Audio(url);
+          audio.onended = () => { URL.revokeObjectURL(url); setTimeout(() => AresVoz.procesar(), 100); };
+          audio.onerror = () => { URL.revokeObjectURL(url); AresVoz.hablarLocal(item); };
+          await audio.play();
+          return;
+        }
+      } catch (e) {}
+    }
+    AresVoz.hablarLocal(item);
+  },
+
+  hablarLocal: (item) => {
+    const s = window.speechSynthesis;
     const v = AresVoz.vozActual();
     const u = new SpeechSynthesisUtterance(item.t);
     if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
@@ -80,18 +104,18 @@ const AresVoz = {
     else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
     else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
     else { u.pitch = 0.9; u.rate = 1; }
-    u.onend = () => { setTimeout(() => AresVoz.procesar(), 80); };
-    u.onerror = () => { setTimeout(() => AresVoz.procesar(), 80); };
+    u.onend = () => { setTimeout(() => AresVoz.procesar(), 100); };
+    u.onerror = () => { setTimeout(() => AresVoz.procesar(), 100); };
     s.speak(u);
   },
 
   frag: (t) => {
     if (!AresVoz.activada || !AresVoz.soportada) return;
-    AresVoz.encolar(t, AresVoz.emocionDe(t));
+    AresVoz.encolar(t, AresVoz.emocionDe(t), true);
   },
 
   hablar: (texto) => {
-    if (!AresVoz.activada || !AresVoz.soportada) return;
+    if (!AresVoz.activada) return;
     const s = window.speechSynthesis;
     if (s.getVoices().length === 0) {
       s.addEventListener('voiceschanged', () => AresVoz.hablar(texto), { once: true });
@@ -124,7 +148,7 @@ const AresVoz = {
       else { trozo += f; }
     });
     if (trozo.trim()) partes.push(trozo);
-    partes.forEach(pz => AresVoz.encolar(pz, emo));
+    partes.forEach(pz => AresVoz.encolar(pz, emo, true));
   },
 
   cancelar: () => {
@@ -171,4 +195,4 @@ const AresVoz = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);
-// FIN VOZ V10.1
+// FIN VOZ V11

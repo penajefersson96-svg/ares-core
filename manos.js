@@ -1,4 +1,4 @@
-// manos.js v5 — sin cercas: extraccion a prueba de backticks
+// manos.js v6 — autocorreccion: se levanta solo una vez
 const AresManos = {
   puerta: (huellaCrear, huellaVer) => (localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear()),
   fetchT: async (url, opts, ms) => {
@@ -27,13 +27,32 @@ const AresManos = {
     return await rm.json();
   },
   validar: (nombre, codigo) => {
-    if (!/\.[a-z]+$/i.test(nombre)) return 'Indique el archivo con su extension, señor (ejemplo: manos.js).';
+    if (!/\.[a-z0-9]+$/i.test(nombre)) return 'Indique el archivo con su extension, señor (ejemplo: manos.js).';
     if (/^(No pude leer|Archivo no permitido)/.test(codigo)) return 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso sobre el, señor.';
     return null;
   },
   cuarentena: (prop, e) => {
     try { localStorage.setItem('ares_cuarentena', String(prop).slice(0, 50000)); } catch (e2) {}
     AresCerebro.mostrar('ARES', 'Control de calidad: error de sintaxis (' + (e && e.message ? e.message : 'sin detalle') + '). La reescritura quedo en cuarentena local para revision del doc. No sellare, señor.');
+  },
+  corregir: async (prop, error, hist, hechos) => {
+    const rfix = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: 'Este codigo JavaScript tiene un error de sintaxis: ' + error + '. Devuelvelo COMPLETO y corregido, SIN cercas markdown y SIN prosa: conserva todo identico salvo la correccion minima necesaria. Codigo:\n\n' + String(prop).slice(0, 6000), historial: hist, hechos })
+    });
+    const df = await rfix.json();
+    return AresManos.limpiar(df.respuesta).code;
+  },
+  chequeo: async (prop, esJs, hist, hechos) => {
+    if (!esJs) return prop;
+    try { new Function(prop); return prop; } catch (e) {
+      AresCerebro.mostrar('ARES', 'Mi reescritura tropezo en sintaxis; intento autocorregirme, señor...');
+      try {
+        const fix = await AresManos.corregir(prop, e.message, hist, hechos);
+        new Function(fix);
+        return fix;
+      } catch (e2) { AresManos.cuarentena(prop, e2); return null; }
+    }
   },
   reglas: 'Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos, registros, lineas de arranque); cada llave y parentesis cierra; conserva las expresiones regulares existentes copiandolas byte por byte sin reescribirlas; PROHIBIDO emitir tags [[ACCION]]; no modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas.',
   ejecutar: (archivo, hist, hechos, huellaCrear, huellaVer) => {
@@ -52,7 +71,8 @@ const AresManos = {
         const limpio = AresManos.limpiar(d8.respuesta);
         let prop = limpio.code;
         if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso.'); return; }
-        if (/\.js$/.test(archivo)) { try { new Function(prop); } catch (e) { AresManos.cuarentena(prop, e); return; } }
+        prop = await AresManos.chequeo(prop, /\.js$/.test(archivo), hist, hechos);
+        if (!prop) return;
         const d9 = await AresManos.sellar(archivo, prop);
         AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
@@ -80,11 +100,12 @@ const AresManos = {
         const limpio = AresManos.limpiar(d2.respuesta);
         let prop = limpio.code;
         if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
-        if (/\.js$/.test(objetivo)) { try { new Function(prop); } catch (e) { AresManos.cuarentena(prop, e); return; } }
+        prop = await AresManos.chequeo(prop, /\.js$/.test(objetivo), hist, hechos);
+        if (!prop) return;
         const d3 = await AresManos.sellar(objetivo, prop);
         AresCerebro.mostrar('ARES', (d3.respuesta || '') + (limpio.cambios ? '\n\nAcomode esto, señor:\n' + limpio.cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
       } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
     });
   }
 };
-// FIN MANOS V5
+// FIN MANOS V6

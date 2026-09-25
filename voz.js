@@ -1,4 +1,4 @@
-// voz.js v10 — cola de voz: no se pisa nunca
+// voz.js v10.1 — cola unificada: nadie interrumpe a nadie
 const AresVoz = {
   activada: true,
   saltar: false,
@@ -6,12 +6,17 @@ const AresVoz = {
   soportada: ('speechSynthesis' in window),
   audio: null,
   hablando: false,
-  cola_pendiente: [],
+  cola: [],
 
   vozGuardada: () => {
     const nombre = localStorage.getItem('ares_voz');
     if (!nombre) return null;
     return window.speechSynthesis.getVoices().find(v => v.name === nombre) || null;
+  },
+
+  vozActual: () => {
+    const s = window.speechSynthesis;
+    return AresVoz.vozGuardada() || s.getVoices().find(x => x.lang === 'es-MX') || s.getVoices().find(x => x.lang === 'es-419') || s.getVoices().find(x => x.lang === 'es-US') || s.getVoices().find(x => x.lang === 'es-ES') || s.getVoices().find(x => x.lang.startsWith('es')) || null;
   },
 
   emocionDe: (t) => {
@@ -22,16 +27,6 @@ const AresVoz = {
   },
 
   emojiNombre: { '1faa8': 'piedra', '1f48e': 'diamante', '1f31f': 'estrella', '1f30d': 'mundo', '1f4a1': 'idea', '1f525': 'fuego', '1f680': 'cohete', '1f9e0': 'cerebro', '1f4bb': 'computadora', '1f4f1': 'telefono', '1f3e0': 'casa', '1f512': 'candado', '1f511': 'llave', '2699': 'engranaje' },
-
-  frag: (t) => {
-    if (!AresVoz.activada || !AresVoz.soportada) return;
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = 'es-ES';
-    const emo = AresVoz.emocionDe(t);
-    u.pitch = emo === 'alegria' ? 1.25 : emo === 'tristeza' ? 0.75 : 1;
-    u.rate = emo === 'alegria' ? 1.08 : emo === 'tristeza' ? 0.85 : 1;
-    window.speechSynthesis.speak(u);
-  },
 
   sonidoEmoji: (hex) => {
     try {
@@ -67,6 +62,34 @@ const AresVoz = {
     } catch (e) {}
   },
 
+  encolar: (t, emo) => {
+    AresVoz.cola.push({ t: t, emo: emo });
+    if (!AresVoz.hablando) AresVoz.procesar();
+  },
+
+  procesar: () => {
+    const s = window.speechSynthesis;
+    if (!AresVoz.cola.length) { AresVoz.hablando = false; return; }
+    AresVoz.hablando = true;
+    const item = AresVoz.cola.shift();
+    const v = AresVoz.vozActual();
+    const u = new SpeechSynthesisUtterance(item.t);
+    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
+    const emo = item.emo;
+    if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
+    else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
+    else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
+    else { u.pitch = 0.9; u.rate = 1; }
+    u.onend = () => { setTimeout(() => AresVoz.procesar(), 80); };
+    u.onerror = () => { setTimeout(() => AresVoz.procesar(), 80); };
+    s.speak(u);
+  },
+
+  frag: (t) => {
+    if (!AresVoz.activada || !AresVoz.soportada) return;
+    AresVoz.encolar(t, AresVoz.emocionDe(t));
+  },
+
   hablar: (texto) => {
     if (!AresVoz.activada || !AresVoz.soportada) return;
     const s = window.speechSynthesis;
@@ -89,59 +112,25 @@ const AresVoz = {
     texto = texto.replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu, (em) => { const n = AresVoz.emojiNombre[em.codePointAt(0).toString(16)]; return n ? ' ' + n + ' ' : ''; });
     texto = texto.replace(/\u2026|\.{2,}/g, ', ');
     AresVoz.ultimo = texto.toLowerCase().replace(/[^a-z0-9áéíóúñü ]/gi, '');
-    const v = AresVoz.vozGuardada() || s.getVoices().find(x => x.lang === 'es-MX') || s.getVoices().find(x => x.lang === 'es-419') || s.getVoices().find(x => x.lang === 'es-US') || s.getVoices().find(x => x.lang === 'es-ES') || s.getVoices().find(x => x.lang.startsWith('es'));
     const emo = AresVoz.emocionDe(texto);
     if (emo === 'alegria') setTimeout(() => AresVoz.sonidoEmoji('1f602'), 150);
     if (emo === 'tristeza') setTimeout(() => AresVoz.sonidoEmoji('1f622'), 200);
     if (emo === 'emocion') setTimeout(() => AresVoz.sonidoEmoji('1f389'), 150);
     const frases = texto.match(/[^.!?…]+[.!?…]*/g) || [texto];
     let trozo = '';
-    const cola = [];
+    const partes = [];
     frases.forEach(f => {
-      if ((trozo + f).length > 180) { if (trozo) cola.push(trozo); trozo = f.trim(); }
+      if ((trozo + f).length > 180) { if (trozo) partes.push(trozo); trozo = f.trim(); }
       else { trozo += f; }
     });
-    if (trozo.trim()) cola.push(trozo);
-    
-    // COLA DE VOZ: si ya hay algo hablando, agrega a cola_pendiente en lugar de cancelar
-    if (AresVoz.hablando) {
-      AresVoz.cola_pendiente.push(...cola);
-      return;
-    }
-    
-    AresVoz.hablando = true;
-    AresVoz.cola_pendiente = [...cola];
-    AresVoz.procesarCola(v, emo);
-  },
-
-  procesarCola: (v, emo) => {
-    const s = window.speechSynthesis;
-    if (AresVoz.cola_pendiente.length === 0) {
-      AresVoz.hablando = false;
-      return;
-    }
-    const c = AresVoz.cola_pendiente.shift();
-    const u = new SpeechSynthesisUtterance(c);
-    if (v) { u.voice = v; u.lang = v.lang; } else { u.lang = 'es-ES'; }
-    if (emo === 'alegria') { u.pitch = 1.15; u.rate = 1.05; }
-    else if (emo === 'tristeza') { u.pitch = 0.75; u.rate = 0.85; }
-    else if (emo === 'emocion') { u.pitch = 1.05; u.rate = 1.1; }
-    else { u.pitch = 0.9; u.rate = 1; }
-    
-    u.onend = () => {
-      setTimeout(() => AresVoz.procesarCola(v, emo), 100);
-    };
-    u.onerror = () => {
-      AresVoz.hablando = false;
-    };
-    
-    s.speak(u);
+    if (trozo.trim()) partes.push(trozo);
+    partes.forEach(pz => AresVoz.encolar(pz, emo));
   },
 
   cancelar: () => {
     window.speechSynthesis.cancel();
     AresVoz.hablando = false;
-    AresVoz.cola_pendiente = [];
+    AresVoz.cola = [];
   },
 
   listar: () => {
@@ -154,9 +143,9 @@ const AresVoz = {
   elegir: (n) => {
     const vs = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
     const v = vs[n - 1];
-    if (!v) { AresVoz.hablar('Ese numero no existe, socio.'); return; }
+    if (!v) { AresVoz.hablar('Ese numero no existe, señor.'); return; }
     localStorage.setItem('ares_voz', v.name);
-    AresVoz.hablar('Perfecto. Desde ahora hablare con la voz ' + v.name);
+    AresVoz.hablar('Perfecto, señor. Desde ahora hablare con la voz ' + v.name);
   },
 
   init: () => {
@@ -182,4 +171,4 @@ const AresVoz = {
   }
 };
 document.addEventListener('DOMContentLoaded', AresVoz.init);
-// FIN VOZ V10
+// FIN VOZ V10.1

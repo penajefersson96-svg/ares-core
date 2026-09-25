@@ -211,6 +211,11 @@ const AresCerebro = {
       } catch (e) { AresCerebro.mostrar('ARES', 'Mis ojos comparadores fallaron ahora, señor.'); }
       return;
     }
+    if (tLow === 'muestra cuarentena') {
+  const q = localStorage.getItem('ares_cuarentena') || 'Nada en cuarentena, señor.';
+  AresCerebro.mostrar('ARES', q.slice(0, 3000));
+  return;
+}
     const mBus = texto.match(/^busca\s+(.+)$/i);
     if (mBus) {
       try {

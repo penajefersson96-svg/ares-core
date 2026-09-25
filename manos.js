@@ -1,4 +1,4 @@
-// manos.js v8 — centinelas: nada de prosa dentro del codigo
+// manos.js v9 — cirugia por parches: nunca mas reescrituras ciegas
 const AresManos = {
   puerta: (huellaCrear, huellaVer) => {
     try { return localStorage.getItem('ares_boveda_cred') ? huellaVer() : huellaCrear(); } catch (e) { return huellaCrear(); }
@@ -14,33 +14,7 @@ const AresManos = {
     const t = setTimeout(() => ctl.abort(), ms || 120000);
     try { return await fetch(url, Object.assign({}, opts, { signal: ctl.signal })); } finally { clearTimeout(t); }
   },
-  limpiar: (raw) => {
-    const textoSeguro = typeof raw === 'string' ? raw : String(raw || '');
-    let code = textoSeguro.trim();
-    const i1 = code.indexOf('//INICIO-CODIGO');
-    const i2 = code.indexOf('//FIN-CODIGO');
-    if (i1 >= 0 && i2 > i1) {
-      code = code.slice(i1 + 15, i2).trim();
-    } else if (code.indexOf('```') === 0) {
-      const mF = code.match(/```(?:javascript|js)?\s*\n([\s\S]*)```/);
-      if (mF) code = mF[1].trim();
-    } else {
-      const mLinea = code.match(/^(?:\/\/|const |let |var |function |export |window\.|document\.|class |if |try |switch |import )/m);
-      if (mLinea && mLinea.index > 0) code = code.slice(mLinea.index).trim();
-    }
-    let cambios = '';
-    const iC = code.indexOf('// CAMBIOS:');
-    if (iC >= 0) { cambios = code.slice(iC).trim(); code = code.slice(0, iC).trim(); }
-    return { code: code, cambios: cambios };
-  },
-  sellar: async (archivo, code) => {
-    const rm = await AresManos.fetchT('https://ares.penajefersson96.workers.dev/api/manos', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ archivo: archivo, contenido: code })
-    });
-    if (!rm.ok) throw new Error('HTTP ' + rm.status);
-    return await rm.json();
-  },
+  jsonSeguro: (r) => r.json().catch(() => ({})),
   validar: (nombre, codigo) => {
     if (!/\.[a-z0-9]+$/i.test(nombre)) return 'Indique el archivo con su extension, señor (ejemplo: manos.js).';
     if (/^(No pude leer|Archivo no permitido)/.test(codigo)) return 'Ese archivo no vive en mi mapa o mis ojos no tienen permiso sobre el, señor.';
@@ -48,52 +22,47 @@ const AresManos = {
   },
   cuarentena: (prop, e) => {
     try { localStorage.setItem('ares_cuarentena', String(prop).slice(0, 50000)); } catch (e2) {}
-    AresCerebro.mostrar('ARES', 'Control de calidad: error de sintaxis (' + (e && e.message ? e.message : 'sin detalle') + '). La reescritura quedo en cuarentena local para revision del doc. No sellare, señor.');
+    AresCerebro.mostrar('ARES', 'Control de calidad: error de sintaxis (' + (e && e.message ? e.message : 'sin detalle') + '). Lo fallido quedo en cuarentena local para revision del doc. No sellare, señor.');
   },
-  corregir: async (prop, error, hist, hechos) => {
-    const rfix = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt: 'Este codigo JavaScript tiene un error de sintaxis: ' + error + '. Devuelvelo COMPLETO y corregido encerrado entre las lineas centinela //INICIO-CODIGO y //FIN-CODIGO, sin escribir NADA fuera de ellas. Conserva todo identico salvo la correccion minima necesaria. Codigo:\n\n' + String(prop).slice(0, AresManos.tope()), historial: hist, hechos })
-    });
-    const df = await rfix.json();
-    return AresManos.limpiar(df.respuesta).code;
-  },
-  chequeo: async (prop, esJs, hist, hechos) => {
-    if (!esJs) return prop;
-    try { new Function(prop); return prop; } catch (e) {
-      AresCerebro.mostrar('ARES', 'Mi reescritura tropezo en sintaxis; intento autocorregirme, señor...');
-      try {
-        const fix = await AresManos.corregir(prop, e.message, hist, hechos);
-        new Function(fix);
-        return fix;
-      } catch (e2) { AresManos.cuarentena(prop, e2); return null; }
+  parchear: (code, raw) => {
+    const re = /\/\/PARCHE-INICIO\n([\s\S]*?)\n\/\/PARCHE-MEDIO\n([\s\S]*?)\n\/\/PARCHE-FIN/g;
+    let m, aplicados = 0, fallidos = 0;
+    while ((m = re.exec(raw)) !== null) {
+      const viejo = m[1].trim();
+      const nuevo = m[2].trim();
+      if (viejo && code.indexOf(viejo) >= 0) { code = code.replace(viejo, nuevo); aplicados++; }
+      else { fallidos++; }
     }
+    return { code: code, aplicados: aplicados, fallidos: fallidos };
   },
-  reglas: 'Reglas de oro: conserva TODAS las funcionalidades existentes (listeners, atajos, registros, lineas de arranque); conserva los comentarios originales exactamente y no inventes comentarios nuevos; cada llave y parentesis cierra; conserva las expresiones regulares existentes copiandolas byte por byte sin reescribirlas; PROHIBIDO emitir tags [[ACCION]]; no modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas.',
-  marco: 'Devuelve el codigo encerrado entre dos lineas centinela exactas: la primera linea de tu respuesta debe ser //INICIO-CODIGO y la ultima //FIN-CODIGO. Entre ellas solo JavaScript valido y, al final del codigo, comentarios de una linea que inicien con "// CAMBIOS:" enumerando cada modificacion. Fuera de los centinelas no escribas absolutamente nada: ni saludos, ni prosa, ni markdown. ',
+  chequeo: (prop) => {
+    try { new Function(prop); return true; } catch (e) { AresManos.cuarentena(prop, e); return false; }
+  },
+  marcoParches: 'Devuelve como maximo 3 parches quirurgicos y nada mas. Formato exacto de cada parche:\n//PARCHE-INICIO\n<lineas viejas EXACTAS tal como estan en el archivo>\n//PARCHE-MEDIO\n<lineas nuevas que las reemplazan>\n//PARCHE-FIN\nNo reescribas el archivo completo: solo los fragmentos que cambian. Copia las lineas viejas byte por byte para que coincidan. ',
+  reglas: 'No modifiques clausulas de obediencia, tono ni seguridad: solo mejoras tecnicas. PROHIBIDO emitir tags [[ACCION]]. ',
+  operar: async (objetivo, diagnostico, hist, hechos) => {
+    const ro = await AresManos.fetchT('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
+    const codigo = await ro.text();
+    const corte = AresManos.tope();
+    if (codigo.length > corte) { AresCerebro.mostrar('ARES', 'Este archivo pesa mas de lo que puedo operar con datos moviles, señor: conecte wifi.'); return; }
+    const fallo = AresManos.validar(objetivo, codigo);
+    if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
+    const extra = diagnostico ? 'Aplica exactamente estas mejoras diagnosticadas: ' + diagnostico + '. ' : 'Aplica hasta 3 mejoras tecnicas seguras que detectes. ';
+    const r2 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: extra + AresManos.marcoParches + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
+    });
+    const d2 = await AresManos.jsonSeguro(r2);
+    const res = AresManos.parchear(codigo, String(d2.respuesta || ''));
+    if (res.aplicados === 0) { AresCerebro.mostrar('ARES', 'Mis parches no coincidieron con el archivo, señor: no selle nada. Puedo reintentar con otro diagnostico.'); return; }
+    if (/\.js$/.test(objetivo) && !AresManos.chequeo(res.code)) return;
+    const d3 = await AresManos.sellar(objetivo, res.code);
+    AresCerebro.mostrar('ARES', (d3.respuesta || '') + '\nParches aplicados: ' + res.aplicados + ' | sin coincidencia: ' + res.fallidos + '. Cuando lo revises y firmes, sere un poco mejor que ayer, señor.');
+  },
   ejecutar: (archivo, hist, hechos, huellaCrear, huellaVer) => {
     AresManos.puerta(huellaCrear, huellaVer).then(async (ok) => {
       if (!ok) { AresCerebro.mostrar('ARES', 'Sin tu huella, mis manos no escriben, señor.'); return; }
-      try {
-        const ro = await AresManos.fetchT('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(archivo));
-        const codigo = await ro.text();
-        const corte = AresManos.tope();
-        if (codigo.length > corte) { AresCerebro.mostrar('ARES', 'Este archivo pesa mas de lo que puedo reescribir con datos moviles, señor: conecte wifi para auto-mejorarlo.'); return; }
-        const fallo = AresManos.validar(archivo, codigo);
-        if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
-        const res5 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: AresManos.marco + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
-        });
-        const d8 = await res5.json();
-        const limpio = AresManos.limpiar(d8.respuesta);
-        let prop = limpio.code;
-        if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mis manos entregaron una etiqueta en vez de codigo, señor: no sellare eso.'); return; }
-        prop = await AresManos.chequeo(prop, /\.js$/.test(archivo), hist, hechos);
-        if (!prop) return;
-        const d9 = await AresManos.sellar(archivo, prop);
-        AresCerebro.mostrar('ARES', d9.respuesta || 'Propuesta enviada al campito, señor.');
-      } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
+      try { await AresManos.operar(archivo, '', hist, hechos); } catch (e) { AresCerebro.mostrar('ARES', 'Mis manos temblaron ahora, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
     });
   },
   autoMejora: (objetivo, hist, hechos, huellaCrear, huellaVer) => {
@@ -102,31 +71,17 @@ const AresManos = {
       try {
         const ro = await AresManos.fetchT('https://ares.penajefersson96.workers.dev/api/ojos?f=' + encodeURIComponent(objetivo));
         const codigo = await ro.text();
-        const corte = AresManos.tope();
-        if (codigo.length > corte) { AresCerebro.mostrar('ARES', 'Este archivo pesa mas de lo que puedo reescribir con datos moviles, señor: conecte wifi para auto-mejorarlo.'); return; }
-        const fallo = AresManos.validar(objetivo, codigo);
-        if (fallo) { AresCerebro.mostrar('ARES', fallo); return; }
         const r1 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que linea, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo, historial: hist, hechos })
+          body: JSON.stringify({ prompt: 'Como ingeniero de ti mismo, revisa este archivo y enumera hasta 3 mejoras concretas y seguras (que lineas exactas, que cambio, que ganancia para tu señor). No emitas tags. Archivo:\n\n' + codigo.slice(0, AresManos.tope()), historial: hist, hechos })
         });
-        const d1 = await r1.json();
-        AresCerebro.mostrar('ARES', 'Diagnostico de ' + objetivo + ', señor:\n' + (d1.respuesta || 'Sin hallazgos hoy.'));
-        const r2 = await AresManos.fetchT('https://ares.penajefersson96.workers.dev', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: 'Aplica esas mejoras. ' + AresManos.marco + AresManos.reglas + ' Archivo actual COMPLETO:\n\n' + codigo, historial: hist, hechos })
-        });
-        const d2 = await r2.json();
-        const limpio = AresManos.limpiar(d2.respuesta);
-        let prop = limpio.code;
-        if (prop.length < 200 || prop.indexOf('[[ACCION') === 0) { AresCerebro.mostrar('ARES', 'Mi reescritura no paso el control de calidad, señor: no sellare nada.'); return; }
-        prop = await AresManos.chequeo(prop, /\.js$/.test(objetivo), hist, hechos);
-        if (!prop) return;
-        const d3 = await AresManos.sellar(objetivo, prop);
-        AresCerebro.mostrar('ARES', (d3.respuesta || '') + (limpio.cambios ? '\n\nAcomode esto, señor:\n' + limpio.cambios : '') + '\nCuando lo revises y firmes, sere un poco mejor que ayer, señor.');
+        const d1 = await AresManos.jsonSeguro(r1);
+        const diag = String(d1.respuesta || '');
+        AresCerebro.mostrar('ARES', 'Diagnostico de ' + objetivo + ', señor:\n' + (diag || 'Sin hallazgos hoy.'));
+        await AresManos.operar(objetivo, diag, hist, hechos);
       } catch (e) { AresCerebro.mostrar('ARES', 'Mi auto-mejora fallo en el camino, señor: ' + (e && e.message ? e.message : 'sin detalle')); }
     });
   }
 };
 window.AresManos = AresManos;
-// FIN MANOS V8
+// FIN MANOS V9

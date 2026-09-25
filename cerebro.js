@@ -216,6 +216,12 @@ const AresCerebro = {
   AresCerebro.mostrar('ARES', q.slice(0, 3000));
   return;
 }
+    const mMin = texto.match(/^minutero\s+(\d+)$/i);
+if (mMin) {
+  if (window.AresGlobo) AresGlobo.minutero(Number(mMin[1]));
+  else AresCerebro.mostrar('ARES', 'Mi esfera no esta cargada, señor.');
+  return;
+}
     const mBus = texto.match(/^busca\s+(.+)$/i);
     if (mBus) {
       try {

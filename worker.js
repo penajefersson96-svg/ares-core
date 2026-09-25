@@ -10,7 +10,7 @@ export default {
 
     if (ruta === '/api/ojos') {
       const f = new URL(request.url).searchParams.get('f') || '';
-      const lista = ['cerebro.js','voz.js','panel.js','orbe.js','memoria.js','oidos.js','sonidos.js','reporte.js','mani.js','diagnostico.js','index.html','manifest.webmanifest','worker.js','sw.js','style.css','manos.js','boveda.js','comandos.js','supervisor.js'];
+      const lista = ['cerebro.js','voz.js','panel.js','orbe.js','memoria.js','oidos.js','sonidos.js','reporte.js','mani.js','diagnostico.js','index.html','manifest.webmanifest','worker.js','sw.js','style.css','manos.js','boveda.js','comandos.js','supervisor.js','globo.js'];
       if (f.includes('..') || (!lista.includes(f) && !f.startsWith('propuestas/'))) return new Response('Archivo no permitido.', { headers: { 'Content-Type': 'text/plain', 'Access-Control-Allow-Origin': '*' } });
       const rama = f.startsWith('propuestas/') ? 'campito' : 'main';
 const r = await fetch('https://raw.githubusercontent.com/penajefersson96-svg/ares-core/' + rama + '/' + f);

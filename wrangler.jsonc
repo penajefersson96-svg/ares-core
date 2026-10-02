@@ -2,54 +2,7 @@
 "name": "ares",
 "main": "worker.js",
 "compatibility_date": "2026-09-07",
-"compatibility_flags": ["nodejs_compat"],
-
 "observability": {
 "enabled": true
-},
-
-// Variables de entorno (las que NO son secrets)
-"vars": {
-"ENVIRONMENT": "production",
-"WORKER_VERSION": "3.0"
-},
-
-// Secrets (estos NO van en el repo, se configuran en el dashboard de Cloudflare)
-// Documentación de lo que necesitas configurar manualmente:
-// - GEMINI_API_KEY: Tu API key de Google Gemini
-// - GITHUB_TOKEN: Token de GitHub con permisos de lectura/escritura en el repo
-// - ELEVEN_KEY: API key de ElevenLabs
-// - ELEVEN_VOICE: ID de la voz de ElevenLabs (ej: "ErXwobaYiN019PkySvjV")
-
-// Configuración de límites
-"limits": {
-"cpu_ms": 50,
-"memory_mb": 128
-},
-
-// Configuración de logs
-"logpush": {
-"enabled": false
-},
-
-// Rutas personalizadas (si usas dominio propio)
-// "routes": [
-// { "pattern": "ares.tudominio.com", "zone_name": "tudominio.com" }
-// ],
-
-// Configuración de desarrollo local
-"dev": {
-"ip": "0.0.0.0",
-"port": 8787,
-"local_protocol": "http",
-"upstream_protocol": "https"
-},
-
-// Configuración de despliegue
-"upload_source_maps": true,
-
-// Configuración de triggers (si quieres ejecutar el worker en schedule)
-// "triggers": {
-// "crons": ["0 6 * * *"] // Ejecutar todos los días a las 6 AM
-// }
+}
 }

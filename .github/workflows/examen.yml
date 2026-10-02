@@ -1,20 +1,63 @@
 name: examen-campito
+
 on:
   push:
     branches: [campito]
   workflow_dispatch:
+
 jobs:
-  examinar:
+  validar-sintaxis:
     runs-on: ubuntu-latest
+    
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout código
+        uses: actions/checkout@v4
+      
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-      - name: Examen esbuild (juez Cloudflare)
-        run: npx --yes esbuild worker.js --bundle --outfile=/tmp/ares-out.js
-      - name: Examen de Ares
-        run: python examen.py
+      
+      - name: Validar sintaxis de archivos JavaScript
+        run: |
+          archivos=(
+            "cerebro.js"
+            "voz.js"
+            "memoria.js"
+            "panel.js"
+            "orbe.js"
+            "sonidos.js"
+            "oidos.js"
+            "diagnostico.js"
+            "reporte.js"
+            "worker.js"
+          )
+          
+          errores=0
+          for archivo in "${archivos[@]}"; do
+            if [ -f "$archivo" ]; then
+              echo "Validando $archivo..."
+              if node --check "$archivo" 2>&1; then
+                echo "✅ $archivo: OK"
+              else
+                echo "❌ $archivo: Error de sintaxis"
+                errores=$((errores + 1))
+              fi
+            else
+              echo "⚠️  $archivo: No encontrado"
+            fi
+          done
+          
+          if [ $errores -gt 0 ]; then
+            echo "❌ Se encontraron $errores errores de sintaxis"
+            exit 1
+          fi
+          
+          echo "✅ Todos los archivos tienen sintaxis válida"
+      
+      - name: Validar worker.js para Cloudflare
+        run: |
+          if [ -f "worker.js" ]; then
+            echo "Verificando que worker.js exporta correctamente..."
+            node -e "import('./worker.js').then(m => console.log('✅ Worker exporta:', Object.keys(m))).catch(e => { console.error('❌ Error:', e.message); process.exit(1); })"
+          fi

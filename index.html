@@ -1,40 +1,53 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
- <meta name="viewport" content="width=device-width, initial-scale=1.0, interactive-widget=resizes-content"> 
-<title>ARES</title>
- <link rel="manifest" href="manifest.webmanifest"> 
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#050510">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="ARES - Asistente personal de Jefersson Peña">
+  <title>ARES</title>
+  
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Favicon (puedes añadir uno después) -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
 </head>
 <body>
-  <header><h1>ARES</h1></header>
+  <header>
+    <h1>ARES</h1>
+  </header>
 
-  <main id="chat">Sistema iniciado. Esperando órdenes...</main>
-
-  <details class="scan">
-    <summary>📂 Escáner de archivos</summary>
-    <input type="file" onchange="AresDiag.leer(this.files[0])">
-  </details>
+  <main id="chat"></main>
 
   <div class="chat-input">
-    <input type="text" id="entrada" placeholder="Habla con Ares..." autocomplete="off">
+    <input type="text" id="entrada" placeholder="Habla con Ares..." autocomplete="off" autocapitalize="sentences">
     <button id="enviar">OK</button>
   </div>
 
-  <footer>v0.3 · Fase 3 · Núcleo Local</footer>
-
+  <!-- Scripts en orden de dependencias -->
   <script src="diagnostico.js"></script>
-  <script src="globo.js"></script>
-  <script src="cerebro.js?v=3"></script>
-  <script src="manos.js"></script> 
+  <script src="panel.js"></script>
+  <script src="orbe.js"></script>
+  <script src="sonidos.js"></script>
   <script src="voz.js"></script>
-   <script src="memoria.js?v=1"></script> 
-   <script src="orbe.js?v=1"></script> 
-   <script src="oidos.js?v=1"></script> 
-   <script src="reporte.js?v=1"></script> 
-   <script src="mani.js?v=1"></script> 
-   <script src="panel.js?v=1"></script> 
-   <script src="sonidos.js?v=1"></script> 
+  <script src="memoria.js"></script>
+  <script src="oidos.js"></script>
+  <script src="cerebro.js"></script>
+  <script src="reporte.js"></script>
+  <script src="mani.js"></script>
+  
+  <!-- Registro del Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('[SW] Registrado:', reg.scope))
+          .catch(err => console.error('[SW] Error:', err));
+      });
+    }
+  </script>
 </body>
 </html>

@@ -1,46 +1,82 @@
-// memoria.js — Fase 6: Memoria de largo plazo de Ares
+// memoria.js v2.0 — Base de datos estructurada (DAO), sin acoplamiento a UI
 const AresMemoria = {
-  clave: 'ares_memoria',
-
-  leer: () => JSON.parse(localStorage.getItem(AresMemoria.clave) || '[]'),
-
-  guardar: (dato) => {
+  CLAVE: 'ares_memoria_v2',
+  
+  // Lee la memoria como un array de objetos estructurados
+  leer: () => {
+    try {
+      const data = localStorage.getItem(AresMemoria.CLAVE);
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      console.error('Error leyendo memoria:', e);
+      return [];
+    }
+  },
+  
+  // Guarda un hecho nuevo con timestamp
+  guardar: (texto, tipo = 'hecho') => {
+    if (!texto || typeof texto !== 'string') return false;
+    
     const m = AresMemoria.leer();
-    m.push(dato);
-    localStorage.setItem(AresMemoria.clave, JSON.stringify(m.slice(-30)));
-    AresVoz.saltar = true;
-    AresVoz.hablar('Guardado en mi memoria: ' + dato);
-  },
-
-  repasar: () => {
-    const m = AresMemoria.leer();
-    const txt = m.length ? m.join(' | ') : 'Aun no guardo nada sobre ti, socio.';
-    AresDiag.log('🧠 Memoria: ' + txt);
-    AresVoz.saltar = true;
-    AresVoz.hablar(m.length ? 'Recuerdo esto: ' + txt : 'Aun no guardo nada sobre ti.');
-  },
-
-  olvidar: () => {
-    localStorage.removeItem(AresMemoria.clave);
-    AresVoz.saltar = true;
-    AresVoz.hablar('He borrado mi memoria. Empezamos de cero.');
-  },
-
-  init: () => {
-    const original = AresCerebro.mostrar;
-    AresCerebro.mostrar = (quien, msg) => {
-      original(quien, msg);
-      if (quien === 'TÚ') {
-        const t = msg.toLowerCase().trim();
-        if (t.startsWith('recuerda ')) {
-          const dato = msg.trim().slice(8).replace(/^(que|:)\s*/i, '').trim();
-          if (dato) AresMemoria.guardar(dato);
-        }
-        else if (t === 'memoria' || t.includes('que recuerdas')) AresMemoria.repasar();
-        else if (t === 'olvida todo') AresMemoria.olvidar();
-      }
+    const nuevoHecho = {
+      id: Date.now(),
+      text: texto.trim(),
+      tipo: tipo, // 'hecho', 'preferencia', 'aprendizaje'
+      fecha: new Date().toISOString()
     };
     
+    m.push(nuevoHecho);
+    
+    // Límite duro de 50 recuerdos para no inflar LocalStorage
+    const memoriaFinal = m.slice(-50);
+    localStorage.setItem(AresMemoria.CLAVE, JSON.stringify(memoriaFinal));
+    
+    return nuevoHecho;
+  },
+  
+  // Devuelve el texto plano para inyectar en el Prompt del Worker
+  obtenerParaPrompt: () => {
+    const m = AresMemoria.leer();
+    if (m.length === 0) return '';
+    // Formato: "El usuario prefiere X. El usuario trabaja en Y."
+    return m.map(item => `- ${item.text}`).join('\n');
+  },
+  
+  // Devuelve un resumen legible para mostrar en chat
+  obtenerResumen: () => {
+    const m = AresMemoria.leer();
+    if (m.length === 0) return 'Aun no guardo nada sobre usted, señor.';
+    
+    return m.map(item => {
+      const fecha = new Date(item.fecha).toLocaleDateString('es-ES');
+      return `• ${item.text} (${fecha})`;
+    }).join('\n');
+  },
+  
+  // Borrar toda la memoria
+  formatear: () => {
+    localStorage.removeItem(AresMemoria.CLAVE);
+    localStorage.removeItem('ares_memoria'); // Limpia la versión vieja si existía
+    return true;
+  },
+  
+  // Migración silenciosa de la versión vieja (strings planos) a la nueva (objetos)
+  migrar: () => {
+    const vieja = localStorage.getItem('ares_memoria');
+    if (vieja) {
+      try {
+        const arrViejo = JSON.parse(vieja);
+        if (Array.isArray(arrViejo) && typeof arrViejo[0] === 'string') {
+          arrViejo.forEach(texto => AresMemoria.guardar(texto, 'migrado'));
+        }
+        localStorage.removeItem('ares_memoria');
+      } catch (e) {}
+    }
+  },
+  
+  init: () => {
+    AresMemoria.migrar();
   }
 };
+
 document.addEventListener('DOMContentLoaded', AresMemoria.init);

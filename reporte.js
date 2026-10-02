@@ -1,67 +1,133 @@
-// reporte.js v4 — Parte 1 (sin emojis, a prueba de portapapeles)
+// reporte.js v5.0 — Generador de reportes seguro y profesional
 const AresReporte = {
-  archivos: ['diagnostico.js', 'cerebro.js', 'voz.js', 'oidos.js', 'memoria.js', 'orbe.js', 'sonidos.js'],
-  mods: () => {
-    const t = (v) => (v === 'undefined' ? 'FALTA' : 'ok');
-    return 'Diag:' + t(typeof AresDiag) + ' Cerebro:' + t(typeof AresCerebro) + ' Voz:' + t(typeof AresVoz) + ' Oidos:' + t(typeof AresOidos) + ' Memoria:' + t(typeof AresMemoria) + ' Orbe:' + t(typeof AresOrbe) + ' Sonidos:' + t(typeof AresSonidos);
+  ARCHIVOS_CORE: [
+    'cerebro.js', 'voz.js', 'memoria.js', 'panel.js',
+    'orbe.js', 'sonidos.js', 'oidos.js', 'diagnostico.js'
+  ],
+  
+  verificarModulos: () => {
+    const modulos = {
+      'AresCerebro': typeof AresCerebro,
+      'AresVoz': typeof AresVoz,
+      'AresMemoria': typeof AresMemoria,
+      'AresPanel': typeof AresPanel,
+      'AresOrbe': typeof AresOrbe,
+      'AresSonidos': typeof AresSonidos,
+      'AresOidos': typeof AresOidos,
+      'AresDiag': typeof AresDiag
+    };
+    
+    const faltantes = Object.entries(modulos)
+      .filter(([_, tipo]) => tipo === 'undefined')
+      .map(([nombre]) => nombre);
+    
+    return {
+      total: Object.keys(modulos).length,
+      cargados: Object.keys(modulos).length - faltantes.length,
+      faltantes: faltantes
+    };
   },
-  sintaxis: async () => {
-    const out = [];
-    for (const a of AresReporte.archivos) {
-      try {
-        const r = await fetch(a + '?t=' + Date.now());
-        if (!r.ok) { out.push(a + ': no existe'); continue; }
-        new Function(await r.text());
-        out.push(a + ': OK');
-      } catch (e) { out.push(a + ': ERROR ' + e.message); }
-    }
-    return out.join(' | ');
+  
+  verificarCapacidades: () => {
+    return {
+      speechSynthesis: 'speechSynthesis' in window,
+      speechRecognition: 'webkitSpeechRecognition' in window || 'SpeechRecognition' in window,
+      serviceWorker: 'serviceWorker' in navigator,
+      wakeLock: 'wakeLock' in navigator,
+      localStorage: (() => {
+        try {
+          localStorage.setItem('test', '1');
+          localStorage.removeItem('test');
+          return true;
+        } catch (e) {
+          return false;
+        }
+      })()
+    };
   },
-  mani: async () => {
-    const out = [];
-    out.push('link:' + (document.querySelector('link[rel="manifest"]') ? 'si' : 'NO'));
+  
+  verificarManifest: async () => {
     try {
-      const r = await fetch('manifest.webmanifest?t=' + Date.now());
-      const m = await r.json();
-      out.push('manifest OK, iconos: ' + (m.icons ? m.icons.length : 0));
-      for (const ic of (m.icons || [])) {
-        const ri = await fetch(ic.src + '?t=' + Date.now());
-        const blob = await ri.blob();
-        const img = await createImageBitmap(blob).catch(() => null);
-        out.push(ic.src + ' -> ' + ri.headers.get('content-type') + ' ' + (img ? img.width + 'x' + img.height : 'NO DECODIFICA'));
+      const response = await fetch('manifest.webmanifest?t=' + Date.now());
+      if (!response.ok) {
+        return { estado: 'ERROR', mensaje: 'No se pudo cargar manifest.webmanifest' };
       }
-    } catch (e) { out.push('manifest ERROR: ' + e.message); }
-    return out.join(' | ');
-  },
-  // reporte.js v4 — Parte 2
-  generar: async () => {
-    AresDiag.log('REPORTE MODULOS: ' + AresReporte.mods());
-    AresDiag.log('REPORTE SINTAXIS: ' + (await AresReporte.sintaxis()));
-    AresDiag.log('REPORTE MANIFIESTO: ' + (await AresReporte.mani()));
-    AresDiag.log('REPORTE ENTORNO: voz:' + ('speechSynthesis' in window) + ' oidos:' + (('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window)) + ' ' + location.host);
-    if (typeof AresVoz !== 'undefined') { AresVoz.saltar = true; AresVoz.hablar('Reporte generado, socio.'); }
-  },
-  init: () => {
-    if (typeof AresCerebro !== 'undefined') {
-      const original = AresCerebro.mostrar;
-      AresCerebro.mostrar = (quien, msg) => {
-        original(quien, msg);
-        if (quien === 'TÚ' && msg.toLowerCase().trim() === 'reporte') AresReporte.generar();
+      
+      const manifest = await response.json();
+      return {
+        estado: 'OK',
+        nombre: manifest.name || 'Sin nombre',
+        iconos: manifest.icons ? manifest.icons.length : 0,
+        themeColor: manifest.theme_color || 'No definido'
       };
+    } catch (e) {
+      return { estado: 'ERROR', mensaje: e.message };
     }
-    setTimeout(async () => {
-      const faltan = [];
-      if (typeof AresCerebro === 'undefined') faltan.push('cerebro.js');
-      if (typeof AresVoz === 'undefined') faltan.push('voz.js');
-      if (typeof AresOidos === 'undefined') faltan.push('oidos.js');
-      if (typeof AresMemoria === 'undefined') faltan.push('memoria.js');
-      if (typeof AresOrbe === 'undefined') faltan.push('orbe.js');
-      for (const a of faltan) {
-        try { const r = await fetch(a + '?t=' + Date.now()); new Function(await r.text()); AresDiag.log('[AVISO] ' + a + ' carga pero no define su modulo'); }
-        catch (e) { AresDiag.log('[GRAVE] ' + a + ' sintaxis: ' + e.message); }
-      }
-    }, 1500);
+  },
+  
+  verificarConexion: () => {
+    return {
+      online: navigator.onLine,
+      tipo: navigator.connection ? navigator.connection.effectiveType : 'desconocido',
+      downlink: navigator.connection ? navigator.connection.downlink : 'N/A'
+    };
+  },
+  
+  generar: async () => {
+    if (!window.AresCerebro) {
+      console.error('[Reporte] AresCerebro no está disponible');
+      return;
+    }
+    
+    AresCerebro.mostrar('ARES', 'Generando reporte del sistema, señor...');
+    
+    const modulos = AresReporte.verificarModulos();
+    const capacidades = AresReporte.verificarCapacidades();
+    const manifest = await AresReporte.verificarManifest();
+    const conexion = AresReporte.verificarConexion();
+    
+    const lineas = [
+      '📊 REPORTE DEL SISTEMA',
+      '',
+      `🧩 Módulos: ${modulos.cargados}/${modulos.total} cargados`,
+      modulos.faltantes.length > 0 ? `   Faltantes: ${modulos.faltantes.join(', ')}` : '   ✅ Todos los módulos presentes',
+      '',
+      '⚙️ Capacidades del navegador:',
+      `   • Síntesis de voz: ${capacidades.speechSynthesis ? '✅' : '❌'}`,
+      `   • Reconocimiento de voz: ${capacidades.speechRecognition ? '✅' : '❌'}`,
+      `   • Service Worker: ${capacidades.serviceWorker ? '✅' : '❌'}`,
+      `   • Wake Lock: ${capacidades.wakeLock ? '✅' : '❌'}`,
+      `   • LocalStorage: ${capacidades.localStorage ? '✅' : '❌'}`,
+      '',
+      '📱 Manifiesto PWA:',
+      `   • Estado: ${manifest.estado}`,
+      manifest.estado === 'OK' ? `   • Nombre: ${manifest.nombre}` : `   • Error: ${manifest.mensaje}`,
+      manifest.estado === 'OK' ? `   • Iconos: ${manifest.iconos}` : '',
+      '',
+      '🌐 Conexión:',
+      `   • Estado: ${conexion.online ? 'En línea' : 'Sin conexión'}`,
+      `   • Tipo: ${conexion.tipo}`,
+      `   • Velocidad: ${conexion.downlink} Mbps`,
+      '',
+      `🕐 Generado: ${new Date().toLocaleString('es-ES')}`
+    ];
+    
+    const reporte = lineas.filter(linea => linea !== '').join('\n');
+    AresCerebro.mostrar('ARES', reporte);
+    
+    if (window.AresDiag) {
+      AresDiag.log('Reporte del sistema generado', 'info');
+    }
+  },
+  
+  init: () => {
+    // El comando "reporte" se maneja en cerebro.js como comando local
+    // Este módulo solo expone la función generar()
+    
+    if (window.AresDiag) {
+      AresDiag.log('Módulo de reportes inicializado', 'info');
+    }
   }
 };
+
 document.addEventListener('DOMContentLoaded', AresReporte.init);
-// FIN REPORTE V4

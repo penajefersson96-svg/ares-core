@@ -1,97 +1,145 @@
+/* style.css v2.0 — Base limpia, sin conflictos con panel.js */
 :root {
   --neon: #0ff;
   --bg: #050510;
-  --panel: rgba(0, 255, 255, 0.05);
+  --panel-bg: rgba(2, 6, 14, 0.8);
+  --text-dim: #888;
+  --text-bright: #fff;
+  --accent: #ffb347;
 }
 
-body {
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
   margin: 0;
-  font-family: 'Consolas', 'Courier New', monospace; /* Fuente de terminal */
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  font-family: 'SF Mono', 'Consolas', 'Courier New', monospace;
   background: var(--bg);
-  color: var(--neon);
+  color: var(--text-bright);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Estructura principal */
+body {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
 }
 
 header {
-  padding: 15px;
+  position: relative;
+  z-index: 10;
+  padding: 12px 16px;
   text-align: center;
-  border-bottom: 1px solid var(--neon);
-  background: var(--panel);
-  backdrop-filter: blur(5px);
+  border-bottom: 1px solid rgba(0, 255, 255, 0.2);
+  background: var(--panel-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   text-transform: uppercase;
-  letter-spacing: 5px;
-  animation: pulso 3s infinite; /* Ares "respira" */
+  letter-spacing: 4px;
+  flex-shrink: 0;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 18px;
+  color: var(--accent);
+  text-shadow: 0 0 10px rgba(255, 179, 71, 0.4);
 }
 
 main {
   flex: 1;
-  padding: 15px;
+  position: relative;
+  z-index: 1;
+  padding: 12px;
   overflow-y: auto;
-  /* Efecto de líneas de escáner sutiles */
-  background: linear-gradient(0deg, transparent 97%, rgba(0,255,255,0.05) 100%);
-  background-size: 100% 4px;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
 }
 
-footer {
-  padding: 8px;
-  text-align: center;
-  border-top: 1px solid var(--neon);
-  font-size: 10px;
-  opacity: 0.6;
-  letter-spacing: 2px;
-}
-
-/* Zona de escritura futurista */
-.chat-input {
+/* Chat y mensajes */
+#chat {
   display: flex;
-  padding: 10px;
+  flex-direction: column;
   gap: 8px;
-  border-top: 1px solid var(--neon);
-  background: rgba(0,0,0,0.8);
+  padding-bottom: 20px;
 }
 
-input {
-  flex: 1;
-  background: transparent;
-  border: 1px solid rgba(0,255,255,0.3);
-  color: var(--neon);
+#chat p {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  word-wrap: break-word;
+  max-width: 90%;
+}
+
+#chat p strong {
+  display: block;
+  font-size: 11px;
+  margin-bottom: 4px;
+  opacity: 0.7;
+  letter-spacing: 1px;
+}
+
+#chat pre {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 255, 255, 0.2);
   padding: 10px;
-  outline: none;
-  font-family: inherit;
+  border-radius: 6px;
+  font-size: 11px;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+  margin: 8px 0 0 0;
 }
 
-input:focus {
-  border-color: var(--neon);
-  box-shadow: 0 0 10px rgba(0,255,255,0.2);
-}
-
+/* Botones globales */
 button {
-  background: transparent;
-  border: 1px solid var(--neon);
-  color: var(--neon);
-  padding: 10px 20px;
-  font-weight: bold;
+  font-family: inherit;
   cursor: pointer;
-  transition: all 0.3s;
+  transition: all 0.2s ease;
 }
 
 button:active {
-  background: var(--neon);
-  color: #000;
-  box-shadow: 0 0 20px var(--neon);
+  transform: scale(0.96);
 }
 
-/* Animación de energía */
-@keyframes pulso {
-  0%, 100% { text-shadow: 0 0 5px var(--neon); opacity: 0.8; }
-  50% { text-shadow: 0 0 20px var(--neon); opacity: 1; }
+/* Scrollbar minimalista */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
 }
 
-/* Scrollbar invisible y fina */
-::-webkit-scrollbar { width: 3px; }
-::-webkit-scrollbar-thumb { background: var(--neon); }
-body:has(#entrada:focus) header canvas { display: none; }
-body:has(#entrada:focus) header h1 { font-size: 22px; margin: 4px 0; }
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 255, 255, 0.3);
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 255, 255, 0.6);
+}
+
+/* Utilidades */
+.hidden { display: none !important; }
+
+/* Animación sutil de carga */
+@keyframes ares-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.loading {
+  animation: ares-pulse 1.5s infinite;
+  color: var(--neon);
+}
